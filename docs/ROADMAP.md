@@ -7,11 +7,11 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-05. Versión de los packs: 0.1.19. Último commit: `45b0823`; el ritmo nuevo aún sin commit.*
+*Última actualización: 2026-11-05. Versión de los packs: 0.1.20. Último commit: `32fe7a8`; los aliados inmunes al fuego, aún sin commit.*
 
 - **Fase actual:** cierre de la Fase 1: ajuste del ritmo de combate.
-- **Último cambio:** peleas más lentas, 1 pirómano de cada 10, la retirada se defiende de quien tiene encima y el log resume qué mata a cada unidad.
-- **Siguiente paso:** decidir el arreglo del fuego, que causó cerca de dos tercios de las bajas aliadas; proponer el commit del ritmo; averiguar por qué la batalla de 200 se estancó; y escribir el análisis de comportamiento.
+- **Último cambio:** los aliados ya no se queman; las explosiones sí les hacen daño.
+- **Siguiente paso:** decidir si la IA de las unidades se investiga aparte antes de la Fase 2, como recomendamos; la batalla de 200 se estancó porque las unidades se atoran y no cavan.
 - **Pendiente de decidir:** qué hacer con una unidad que de verdad se atore en el regreso (ver «Decisiones abiertas»).
 
 ## Fases
@@ -136,7 +136,6 @@ Para que no se pelee en bolita ni a toda velocidad.
 - **Invasores que llegan al centro.** Sin aliados vivos, se quedan en el corazón del castillo y la oleada no termina. Se resuelve con la regla de derrota de la Fase 4.
 - **Aliados al otro lado del muro.** Quien cae regresa por el puente y queda fuera hasta que el muro se abre. Hoy pelea ahí.
 
-- **El fuego de los piromanos.** Decide demasiadas batallas. Opciones: aliados inmunes al fuego, fuego solo sobre bloques y no sobre unidades, o menos fuego. Pendiente de elegir.
 - **Regla de derrota.** Hoy se pierde solo al agotar las vidas de los jugadores. Propuesta: perder también cuando no quedan aliados ni reservas.
 
 ## Decisiones tomadas
@@ -146,6 +145,7 @@ Para que no se pelee en bolita ni a toda velocidad.
 - **Peleas en el agua:** solo se apunta a quien nada si uno también está en el agua; así nadie se queda mirando el lago desde el puente.
 - **El servidor de prueba se reinicia sin preguntar.**
 - **Peleas menos frenéticas:** ni lentas ni a toda velocidad; un duelo entre soldados dura unos 15 a 30 segundos.
+- **Aliados inmunes al fuego:** causaba cerca de dos tercios de sus bajas y los invasores ya eran inmunes. La explosión sí les hace daño.
 - **Piromanos escasos:** unos 8 a 10 de cada 80 unidades, porque hacen mucho daño y destrozan el mapa.
 - **Los soldados derriban paredes solo en la zona del castillo:** ni el puente ni la orilla.
 - **El muro de la puerta lo rompen sobre todo los magos.** Los soldados también lo golpean, muy despacio, para que una oleada sin magos vivos no se quede atascada.

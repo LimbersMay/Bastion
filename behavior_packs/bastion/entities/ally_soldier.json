@@ -422,6 +422,14 @@
               }
             },
             "deals_damage": "no"
+          },
+          {
+            "cause": "fire",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "fire_tick",
+            "deals_damage": "no"
           }
         ]
       },

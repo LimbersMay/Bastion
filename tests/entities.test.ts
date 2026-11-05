@@ -22,6 +22,14 @@ describe("invader_wizard.json y arcane_bolt.json", () => {
     expect(bolt.components["minecraft:type_family"].family).not.toContain(FAMILY.invader);
   });
 
+  it("los aliados no se queman, pero las explosiones sí les hacen daño", () => {
+    for (const name of ["ally_soldier", "ally_wizard"]) {
+      const triggers = readEntity(name).components["minecraft:damage_sensor"].triggers as { cause?: string; deals_damage?: string }[];
+      for (const cause of ["fire", "fire_tick"]) expect(triggers.find((t) => t.cause === cause)?.deals_damage).toBe("no");
+      expect(triggers.find((t) => t.cause === "entity_explosion")).toBeUndefined();
+    }
+  });
+
   it("los invasores ignoran el daño de sus propios proyectiles, explosiones y fuego", () => {
     for (const name of ["invader_soldier", "invader_wizard"]) {
       const sensor = JSON.stringify(readEntity(name).components["minecraft:damage_sensor"]);
