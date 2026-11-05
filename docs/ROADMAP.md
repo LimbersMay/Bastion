@@ -7,13 +7,14 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-05. Versión de los packs: 0.1.22. Rama: `feature/old-fallen-castle`, sin subir. Último commit: el de la caza.*
+*Última actualización: 2026-11-05. Versión de los packs: 0.1.23. Rama: `feature/old-fallen-castle`, sin subir. Último commit: el de la caza; el ajuste de ritmo, aún sin commit.*
 
 - **Fase actual:** investigación de la IA, cerrada. Resultados en [IA.md](IA.md); empieza por «Conclusiones» y «Batalla real».
 - **Último cambio:** la caza. Sin meta central, los invasores van a por el enemigo vivo más cercano y se abren camino con una ruta calculada.
 - **Resultado:** la batalla de referencia ya no se estancó: mataron a todos los aliados y derrotaron al jugador hacia el minuto 8, con 126 bloques derribados. Es una sola batalla.
 - **Confirmado por Limbers (2026-11-05):** «se sintió bastante mejor»; rompieron el castillo por un lado e invadieron. Pidió las peleas un poco más frenéticas.
-- **Siguiente paso:** empezar la Fase 2, unidades estándar.
+- **Ajuste de ritmo (v0.1.23), sin probar en juego:** golpes cada 1,5 s en lugar de 1,75, y soldados un 12 % más rápidos. Duelos de 15 a 22,5 s.
+- **Siguiente paso:** Limbers prueba el ritmo cuando quiera, y empezar la Fase 2, unidades estándar. Limbers la retoma en otra sesión.
 - **Vigilar:** el 73 % de las búsquedas de ruta agotan su límite. La tablet jugó conectada al servidor de la PC, así que falta medir las búsquedas con la partida corriendo dentro de la tablet.
 - **Pendiente de decidir:** ver «Decisiones abiertas».
 
@@ -167,7 +168,7 @@ Para que no se pelee en bolita ni a toda velocidad.
 - **La escalera se queda:** cruzar por encima de un muro escalonado es una mecánica válida.
 - **Peleas en el agua:** solo se apunta a quien nada si uno también está en el agua; así nadie se queda mirando el lago desde el puente.
 - **El servidor de prueba se reinicia sin preguntar.**
-- **Peleas menos frenéticas:** ni lentas ni a toda velocidad; un duelo entre soldados dura unos 15 a 30 segundos.
+- **Ritmo de las peleas:** ni tan frenético como al principio ni lento; un duelo entre soldados dura unos 15 a 30 segundos. Tras probar la caza, Limbers lo pidió un poco más rápido (v0.1.23: 15 a 22,5 s).
 - **Aliados inmunes al fuego:** causaba cerca de dos tercios de sus bajas y los invasores ya eran inmunes. La explosión sí les hace daño.
 - **Piromanos escasos:** unos 8 a 10 de cada 80 unidades, porque hacen mucho daño y destrozan el mapa.
 - **Los soldados derriban paredes solo en la zona del castillo:** ni el puente ni la orilla.

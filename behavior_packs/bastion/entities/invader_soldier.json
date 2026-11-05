@@ -369,7 +369,7 @@
         "max": 40
       },
       "minecraft:movement": {
-        "value": 0.25
+        "value": 0.28
       },
       "minecraft:navigation.walk": {
         "can_path_over_water": true,
@@ -436,7 +436,7 @@
         "priority": 2,
         "speed_multiplier": 1.15,
         "track_target": true,
-        "cooldown_time": 1.75
+        "cooldown_time": 1.5
       },
       "minecraft:behavior.hurt_by_target": {
         "priority": 1

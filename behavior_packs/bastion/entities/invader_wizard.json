@@ -185,7 +185,7 @@
           "priority": 2,
           "speed_multiplier": 1.15,
           "track_target": true,
-          "cooldown_time": 1.75
+          "cooldown_time": 1.5
         }
       }
     },
