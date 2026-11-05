@@ -12,8 +12,6 @@ function objectiveTag(id: string): string {
   return `bastion_objective_${id}`;
 }
 
-const HEART_TAG = "bastion_heart";
-
 /** A esta distancia de la meta, un invasor ya ha pasado el muro (desde fuera o desde encima queda más lejos). */
 const OBJECTIVE_REACHED_DISTANCE = 3;
 
@@ -32,17 +30,6 @@ export function spawnObjective(dimension: Dimension, gate: GateDef): Entity {
   const entity = dimension.spawnEntity(ENTITY_IDS.objective, gate.objective);
   entity.addTag(objectiveTag(gate.id));
   return entity;
-}
-
-/** Coloca la meta del centro del castillo si falta: es a donde van los invasores cuando no tienen a nadie más cerca. */
-export function ensureHeart(dimension: Dimension, map: MapDef): void {
-  const heart = map.siege?.heart;
-  if (!heart || dimension.getEntities({ families: [FAMILY.objective], tags: [HEART_TAG] }).length > 0) return;
-  try {
-    dimension.spawnEntity(ENTITY_IDS.objective, heart).addTag(HEART_TAG);
-  } catch {
-    // Zona aún sin cargar: se reintenta en el siguiente pulso.
-  }
 }
 
 /** El punto de mira de esa puerta, si existe. */

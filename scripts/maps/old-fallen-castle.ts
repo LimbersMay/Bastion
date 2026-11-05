@@ -75,7 +75,6 @@ export const oldFallenCastle: MapDef = {
   ],
 
   siege: {
-    heart: { x: -49.5, y: 124, z: -437.5 },
     // Todo el castillo y sus laderas, sin el puente (x 32 en adelante) ni la orilla del lago: no tiene sentido romper eso.
     zone: { from: { x: -125, y: 90, z: -510 }, to: { x: 28, y: 145, z: -395 } },
   },

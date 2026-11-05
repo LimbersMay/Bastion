@@ -51,6 +51,10 @@ export const RALLY_TAG = "bastion_rally";
 /** Etiqueta del marcador del punto de salida: a donde marchan los soldados si no pueden alcanzar a ningún enemigo. */
 export const SORTIE_TAG = "bastion_sortie";
 
+/** Rastros de caza a la vez; `invader_soldier.json` tiene una entrada por cada uno. */
+export const HUNT_TRAILS = 8;
+export const huntTrailTag = (slot: number) => `bastion_trail_${slot}`;
+
 /** Tramos de la ruta de regreso; los JSON de las unidades tienen una entrada por tramo. */
 export const MAX_RETURN_STAGES = 4;
 

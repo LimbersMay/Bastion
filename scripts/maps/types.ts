@@ -27,10 +27,8 @@ export interface ReinforcementsDef {
   readonly everySeconds: number;
 }
 
-/** Asalto al castillo por donde no hay camino: a dónde quieren llegar los invasores y dónde pueden derribar. */
+/** Asalto al castillo por donde no hay camino: dónde pueden derribar los invasores que cazan a alguien. */
 export interface SiegeDef {
-  /** Centro del castillo: un marcador invisible al que van los invasores cuando no tienen a nadie más cerca. */
-  readonly heart: Vec3;
   /** Caja de bloques (esquinas inclusivas) en la que los soldados atascados pueden derribar lo que les estorba. */
   readonly zone: { readonly from: Vec3; readonly to: Vec3 };
 }

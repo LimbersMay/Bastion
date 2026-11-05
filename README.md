@@ -2,7 +2,7 @@
 
 Addon de **invasión y defensa** para Minecraft Bedrock. Un castillo, fortaleza o villa amurallada es asediado por oleadas de enemigos. Combates en primera persona junto a aliados con IA. No hay crafteo ni supervivencia: el equipo se entrega al empezar.
 
-Estado: **v0.1.21 (etapa 1 de los muros rompibles), probado en el servidor oficial (BDS)**; mapas: The Combat Castle y Old Fallen Castle (ver «Qué falta»).
+Estado: **v0.1.22 (etapa 1 de los muros rompibles), probado en el servidor oficial (BDS)**; mapas: The Combat Castle y Old Fallen Castle (ver «Qué falta»).
 
 ## Retomar el trabajo
 
@@ -114,6 +114,9 @@ scripts/
   systems/loadout.ts      equipo inicial
   maps/                   un archivo por mapa (combat-castle, old-fallen-castle) + validación
   systems/allies.ts       pasa a los aliados de merodear a atacar
+  systems/hunt.ts         la caza: invasores que se abren camino hasta el enemigo vivo más cercano
+  systems/huntLogic.ts    lógica PURA de la caza
+  systems/routeLogic.ts   planificador de rutas PURO
   units/catalog.ts        catálogo de unidades
   ui/menus.ts             formularios
 tests/                    pruebas de la lógica pura

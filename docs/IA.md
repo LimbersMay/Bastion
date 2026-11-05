@@ -2,7 +2,7 @@
 
 Investigación previa a la Fase 2 (2026-11-05). Reúne dos temas que resultaron ser uno: **cómo se comporta cada unidad** y **cómo se mueve por mapas enormes**.
 
-Salvo que se indique otra cosa, las medidas son del servidor de prueba en la PC, sin jugador conectado, en Old Fallen Castle y con unidades de laboratorio. Nada de esto se ha probado aún en la tablet. Los arreglos pequeños ya están en las unidades reales (v0.1.21); la caza y los grupos, no.
+Salvo que se indique otra cosa, las medidas son del servidor de prueba en la PC, sin jugador conectado, en Old Fallen Castle y con unidades de laboratorio. Nada de esto se ha probado aún en la tablet. Los arreglos pequeños (v0.1.21) y la caza (v0.1.22) ya están en las unidades reales; los grupos, no.
 
 ## Conclusiones
 
@@ -16,7 +16,7 @@ Salvo que se indique otra cosa, las medidas son del servidor de prueba en la PC,
 | ¿Sirve para el rescate? | Sí: 6 de 6 llegaron a una sala cerrada en 13 s. | Sin jugador real |
 | ¿Sirven las parejas 1 contra 1? | **No como las probé:** no reducen la bolita, duplican el ritmo y hunden el servidor a 100 contra 100. | Medido |
 | ¿Qué es entonces la bolita? | Dos cosas: **la meta única e indestructible del corazón**, que los reúne a todos, y unidades de más en poco espacio. | Lo primero, medido en batalla; lo segundo, apoyado en medidas |
-| ¿Por qué se estancan las batallas? | Se quedan sin nadie alcanzable y la excavación solo apunta al corazón. | En parte medido; la causa exacta del segundo estancamiento, leída en el código |
+| ¿Por qué se estancaban las batallas? | Se quedaban sin nadie alcanzable y la excavación solo apuntaba al corazón. Con la caza, la batalla de referencia llegó hasta el final. | Medido en una batalla, con el jugador conectado |
 
 ## Lo que se vio en el juego
 
@@ -29,25 +29,31 @@ Una batalla de referencia con 30 aliados y 60 soldados invasores, más los de la
 
 ## Batalla real: la meta del corazón
 
-Es la medida más importante de este documento, y salió después de las demás. Son 30 aliados y 60 soldados invasores con las unidades reales, sin piromanos, durante 9 minutos, con y sin los arreglos pequeños. El jugador se conectó a mitad de la primera y casi desde el inicio de la segunda, y no sé cuánto influyó.
+Es la medida más importante de este documento, y salió después de las demás. Son 30 aliados y 60 soldados invasores con las unidades reales, sin piromanos, hasta 9 minutos, una vez cada versión. El jugador estuvo conectado en parte de las tres y no sé cuánto influyó.
 
-| Al final | Antes | Con arreglos (v0.1.21) |
-|---|---|---|
-| Invasores y aliados vivos | 50 y 9 | 29 y 3 |
-| Bajas de invasores y de aliados | 26 y 25 | 47 y 31 |
-| Bloques derribados | 215 | 462 |
-| Último minuto con combate o excavación | Hacia el 4 a 6 | Hacia el 5,5 |
-| Invasores en el patio | 31 | 14 (8 junto a la meta) |
+| Al final | Antes | Arreglos (v0.1.21) | Caza (v0.1.22) |
+|---|---|---|---|
+| Invasores y aliados vivos | 50 y 9 | 29 y 3 | 23 y 0 |
+| Bajas de invasores y de aliados | 26 y 25 | 47 y 31 | 53 y 34 |
+| Bloques derribados | 215 | 462 | 126 |
+| Empieza el combate fuerte | Minuto 1,5 | Minuto 1,5 | Minuto 3,5 |
+| Final | Estancada desde el 6 | Estancada desde el 5,5 | **Derrota del jugador en el minuto 8** |
+| Invasores junto a la meta | Unos 31 | 8 | No hay meta |
 
 **Causa de la bola de la captura:** `bastion:objective`, la meta invisible del corazón, contaba como un objetivo más. Al ser lo más cercano al llegar, nadie la soltaba, y como no muere, se quedaban golpeándola para siempre. Unos 31 de 50 estaban a 3 bloques o menos de ella, y los aliados a unos 22 bloques, sin que nadie los atacara.
 
 **Qué cambió el arreglo:** la meta pasa a ser el último recurso, detrás de cualquier enemigo alcanzable. A los 8 minutos no había nadie junto a ella y se derribó el doble.
 
-**Qué no resuelve:**
+**Qué no resolvió el arreglo:** sin nadie alcanzable volvían a la meta, y la batalla se estancó desde el minuto 5,5, con los 3 últimos aliados en la ladera oeste.
 
-- Sin nadie alcanzable, vuelven a la meta: a los 9 minutos ya había 8 junto a ella.
-- La batalla se estanca igual desde el minuto 5,5. Los 3 aliados vivos estaban en la ladera oeste, unos 15 bloques por debajo del patio, y 8 invasores en el agua.
-- Causas probables, leídas en el código: la excavación apunta siempre al corazón, se detiene a 12 bloques de él aunque la unidad esté dentro de la roca, y la meta solo se detecta a 100 bloques.
+**Qué cambió la caza:** ya no hay meta central. Mataron a todos los aliados hacia el minuto 5,5 y después al jugador, que perdió sus 5 vidas. Derribaron 126 bloques, cerca de una cuarta parte, porque la ruta rompe solo lo necesario.
+
+**Lo que aún no está bien:**
+
+- **Las búsquedas son lentas:** de 172, 126 agotaron el límite de 12.000 casillas sin llegar (73 %) y tardaron unos 3 s cada una, repartidos entre ticks. El servidor se mantuvo a 20 ticks/s con unas 100 unidades, pero falta medirlo en la tablet y a mayor escala.
+- **Empiezan más tarde:** el combate fuerte llegó 2 minutos después. No medí por qué.
+- **Falta repetirla:** es una sola batalla, y la derrota dependió de que hubiera un jugador conectado.
+- **La tablet fue solo cliente:** jugó conectada al servidor de la PC, así que los cálculos no corrieron en ella.
 
 **Las peleas de las tablas siguientes no tenían meta,** así que no podían mostrar nada de esto. Por eso mi primera conclusión, que la bolita era sobre todo densidad, estaba incompleta.
 
@@ -224,20 +230,20 @@ No está probado todavía. Es la consecuencia lógica de los datos: separar y re
 
 Puertas, `isFighting`, `must_reach` con la meta como último recurso y limpieza de componentes. Mejoran mucho, pero la batalla aún se estanca (ver «Batalla real»).
 
-### Propuesta sin aprobar: la caza, antes de la Fase 2
+### Hecho y confirmado por Limbers en juego: la caza (v0.1.22)
 
-Idea de Limbers: sin meta fija. Su objetivo es acabar con los vivos, y derriban lo que les estorbe.
+Idea de Limbers: sin meta fija. Su objetivo es acabar con los vivos, y derriban lo que les estorbe. Está en `scripts/systems/hunt.ts` y `huntLogic.ts`.
 
-1. Quitar la meta del corazón. La de la puerta del puente se queda, porque también marca la brecha.
-2. Quien no tiene objetivo alcanzable va a por el enemigo vivo más cercano, sea aliado o jugador. No solo a por el último jugador: si no, la bola se forma a su alrededor y los aliados sobran. Cuando solo queda el jugador, sí van todos a por él.
-3. Si no puede llegar, abre camino con el planificador de rutas, no en línea recta: rompe solo lo necesario.
-4. Repetir la batalla de referencia y comparar con la tabla de arriba.
+1. Sin meta del corazón. La de la puerta se queda para marcar la brecha, y solo se persigue si no queda ningún enemigo vivo.
+2. Quien no alcanza a nadie va a por el enemigo vivo más cercano, sea aliado o jugador. Cuando solo queda el jugador, van todos a por él.
+3. Si se atasca, el script busca una ruta, repartida entre ticks y una sola a la vez, y crea un rastro que siguen hasta 12 soldados. Hay 8 rastros como máximo.
 
-**Por decidir:**
+**Elegido por ahora, se puede cambiar:**
 
-- Qué pasa si el jugador se aleja de la zona rompible, porque hoy no se cava en el puente ni en la orilla.
-- Qué hacen si nadie es alcanzable, por ejemplo con un jugador volando.
-- Si los aliados también deben abrirse paso.
+- No se rompe nada fuera de la zona de asedio, ni en el puente ni en la orilla.
+- Un jugador en modo creativo o espectador no cuenta como presa.
+- Solo cazan los invasores; los aliados no se abren paso.
+- El mago invasor busca enemigos a 256 bloques tras la brecha, pero no cava.
 
 Los **grupos** no son necesarios para esto y pueden esperar a la Fase 3, cuando las fichas de la Fase 2 permitan añadirlos en un solo sitio.
 

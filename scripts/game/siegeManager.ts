@@ -3,7 +3,7 @@ import { LOGIC_INTERVAL_TICKS, TICKING_AREA_NAME, TICKS_PER_SECOND } from "../co
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
 import { aliveAllies, healAlly, unleashAllies } from "../systems/allies";
 import { CasualtyLog, type Side } from "../systems/casualties";
-import { describeGateTerrain, ensureHeart, findAimPoint, findObjective, gateTerrainMatches, invaderAtObjective, isAreaLoaded, moveAimPoint, spawnObjective } from "../systems/gate";
+import { describeGateTerrain, findAimPoint, findObjective, gateTerrainMatches, invaderAtObjective, isAreaLoaded, moveAimPoint, spawnObjective } from "../systems/gate";
 import { giveLoadout } from "../systems/loadout";
 import { AllyOrders, ensureRallyPoints, type AllyOrder } from "../systems/orders";
 import { Reinforcements, type ReinforcementTuning } from "../systems/reinforcements";
@@ -305,7 +305,6 @@ export class SiegeManager {
     this.spawner.rescueStuck();
     ensureWaypoints(this.dimension, this.map);
     ensureRallyPoints(this.dimension, this.map);
-    ensureHeart(this.dimension, this.map);
     guideReturns(this.dimension, this.map, this.state.breached, (ally) => this.orders.applyTo(ally, this.state.breached));
     this.orders.tick();
     if (this.state.phase === "wave") {

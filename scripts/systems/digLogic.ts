@@ -2,9 +2,6 @@ import type { Vec3 } from "../maps/types";
 
 /** Lógica pura de los invasores que derriban paredes: qué bloque toca y cuánto aguanta. No toca el juego. */
 
-/** Tan cerca del corazón del castillo ya no hay pared que abrir: quien está aquí ya ha entrado. */
-const HEART_REACHED = 12;
-
 /** Bloques que nadie rompe: los del propio juego, y los que guardan algo que se perdería al romperlos. */
 const UNBREAKABLE = /bedrock|barrier|command_block|structure_|border_block|:allow|:deny|portal|light_block|reinforced_deepslate|chest|barrel|shulker|hopper|dispenser|dropper|furnace|smoker|sign|banner|lectern|jukebox|spawner|:bed$/;
 
@@ -35,7 +32,7 @@ export function hitsToBreak(typeId: string): number {
  * el castillo está sobre un risco. Quien ya está por encima de la meta no cava: nunca abre el suelo que pisa.
  * `reached` es la distancia a la meta a la que ya no hace falta cavar.
  */
-export function digPlan(feet: Vec3, goal: Vec3, reached = HEART_REACHED): Vec3[] {
+export function digPlan(feet: Vec3, goal: Vec3, reached: number): Vec3[] {
   const dx = goal.x - feet.x;
   const dz = goal.z - feet.z;
   if (dx * dx + dz * dz <= reached ** 2) return [];

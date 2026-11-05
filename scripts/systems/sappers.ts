@@ -1,6 +1,7 @@
 import type { BlockPermutation, Dimension, Entity } from "@minecraft/server";
 import { ENTITY_IDS, FAMILY } from "../constants";
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
+import { Hunts } from "./hunt";
 import { digPlan, FIGHT_DISTANCE, GATE_WALL_HITS, hitsToBreak, inFightRange, isUnbreakable, nearBox } from "./digLogic";
 import { isReturning } from "./returnPath";
 import { isFreeSpace } from "./spawnPoint";
@@ -20,8 +21,9 @@ const GATE_WALL_REACH = 2.5;
 const keyOf = (p: Vec3) => `${p.x},${p.y},${p.z}`;
 
 /**
- * Soldados que derriban lo que les corta el paso cuando llevan un rato sin avanzar hacia el castillo.
- * Las paredes y la roca solo dentro de `map.siege.zone`, y lo que derriban vuelve a su sitio al reiniciar.
+ * Soldados que derriban lo que les corta el paso cuando llevan un rato sin avanzar.
+ * Las paredes y la roca solo dentro de `map.siege.zone`, siguiendo la ruta de `Hunts`, y lo que derriban vuelve
+ * a su sitio al reiniciar.
  * El muro de la puerta, en cualquier mapa y muy despacio: lo rompen los magos, pero sin esto una oleada
  * sin magos vivos se quedaría empujándolo para siempre. Ese muro lo repone `raiseWalls`.
  */
@@ -31,32 +33,42 @@ export class Sappers {
   private readonly broken = new Map<string, { at: Vec3; permutation: BlockPermutation }>();
   /** `true` la primera vez que se derriba algo en la partida, para avisar una sola vez. */
   breachedSomewhere = false;
+  private brokenNow = 0;
+  private readonly hunts: Hunts | undefined;
 
   constructor(
     private readonly dimension: Dimension,
     private readonly map: MapDef
-  ) {}
+  ) {
+    this.hunts = map.siege && new Hunts(dimension, map.siege, (at) => this.isProtected(at), (at) => this.strike(at));
+  }
 
   /** Revisión periódica. Devuelve los bloques derribados en este pulso. */
   tick(): number {
-    const siege = this.map.siege;
     const seen = new Map<string, { at: Vec3; still: number }>();
     let budget = MAX_BITES_PER_TICK;
-    let brokenNow = 0;
+    this.brokenNow = 0;
+    const soldiers = this.dimension.getEntities({ type: ENTITY_IDS.invaderSoldier });
+    const stalled: Entity[] = [];
 
-    for (const unit of this.dimension.getEntities({ type: ENTITY_IDS.invaderSoldier })) {
+    for (const unit of soldiers) {
       if (!unit.isValid || isReturning(unit) || unit.isInWater) continue;
       const entry = this.track(unit);
       seen.set(unit.id, entry);
       if (entry.still < STALL_SECONDS || budget <= 0 || this.isFighting(unit)) continue;
       const gate = this.map.gates.find((g) => g.walls.some((w) => nearBox(unit.location, w, GATE_WALL_REACH)));
-      const result = gate ? this.biteGateWall(unit.location, gate) : siege ? this.bite(unit.location, siege.heart, siege.zone) : "none";
+      if (!gate) {
+        stalled.push(unit);
+        continue;
+      }
+      const result = this.biteGateWall(unit.location, gate);
       if (result === "none") continue;
       budget--;
-      if (result === "broken") brokenNow++;
+      if (result === "broken") this.brokenNow++;
     }
     this.watched = seen;
-    return brokenNow;
+    this.hunts?.tick(stalled, soldiers);
+    return this.brokenNow;
   }
 
   private track(unit: Entity): { at: Vec3; still: number } {
@@ -91,29 +103,26 @@ export class Sappers {
     return this.map.gates.some((g) => g.walls.some((w) => inBox(at, w)) || (g.blockers ?? []).some((b) => inBox(at, b)));
   }
 
-  /** Da un golpe al primer bloque que estorba en el siguiente paso de esa unidad. */
-  private bite(feet: Vec3, heart: Vec3, zone: { from: Vec3; to: Vec3 }): "none" | "hit" | "broken" {
-    for (const at of digPlan(feet, heart)) {
-      if (!inBox(at, zone)) return "none";
-      const block = this.dimension.getBlock(at);
-      if (!block || isFreeSpace(block)) continue;
-      if (isUnbreakable(block.typeId) || this.isProtected(at)) return "none";
+  /** Un golpe a ese bloque del rastro de una caza. */
+  private strike(at: Vec3): "none" | "hit" | "broken" {
+    const block = this.dimension.getBlock(at);
+    if (!block || isFreeSpace(block)) return "none";
+    if (isUnbreakable(block.typeId) || this.isProtected(at)) return "none";
 
-      const key = keyOf(at);
-      const hits = (this.hits.get(key) ?? 0) + 1;
-      if (hits < hitsToBreak(block.typeId)) {
-        this.hits.set(key, hits);
-        this.dimension.playSound("mob.zombie.wood", at, { volume: 0.6 });
-        return "hit";
-      }
-      this.hits.delete(key);
-      if (!this.broken.has(key)) this.broken.set(key, { at, permutation: block.permutation });
-      block.setType("minecraft:air");
-      this.dimension.playSound("mob.zombie.woodbreak", at, { volume: 0.8 });
-      this.breachedSomewhere = true;
-      return "broken";
+    const key = keyOf(at);
+    const hits = (this.hits.get(key) ?? 0) + 1;
+    if (hits < hitsToBreak(block.typeId)) {
+      this.hits.set(key, hits);
+      this.dimension.playSound("mob.zombie.wood", at, { volume: 0.6 });
+      return "hit";
     }
-    return "none";
+    this.hits.delete(key);
+    if (!this.broken.has(key)) this.broken.set(key, { at, permutation: block.permutation });
+    block.setType("minecraft:air");
+    this.dimension.playSound("mob.zombie.woodbreak", at, { volume: 0.8 });
+    this.breachedSomewhere = true;
+    this.brokenNow++;
+    return "broken";
   }
 
   /** Un golpe al muro de la puerta que tiene delante, si lo tiene. */
@@ -156,6 +165,7 @@ export class Sappers {
     this.hits.clear();
     this.watched.clear();
     this.breachedSomewhere = false;
+    this.hunts?.clear();
     return restored;
   }
 }

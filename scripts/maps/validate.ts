@@ -62,7 +62,6 @@ export function validateMap(map: MapDef): string[] {
   if (map.flankSpawns && !map.siege) err("flankSpawns requiere siege: sin él, esas unidades no tienen a dónde ir.");
   map.flankSpawns?.forEach((v, i) => checkVec(`flankSpawns[${i}]`, v));
   if (map.siege) {
-    checkVec("siege.heart", map.siege.heart);
     checkVec("siege.zone.from", map.siege.zone.from);
     checkVec("siege.zone.to", map.siege.zone.to);
   }

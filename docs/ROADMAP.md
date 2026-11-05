@@ -7,13 +7,14 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-05. Versión de los packs: 0.1.21. Rama: `feature/old-fallen-castle`, sin subir. Último commit: los arreglos pequeños de la IA.*
+*Última actualización: 2026-11-05. Versión de los packs: 0.1.22. Rama: `feature/old-fallen-castle`, sin subir. Último commit: el de la caza.*
 
-- **Fase actual:** investigación de la IA, antes de la Fase 2. Resultados en [IA.md](IA.md); empieza por «Conclusiones» y «Batalla real».
-- **Último cambio:** los invasores persiguen primero a quien pueden alcanzar, todas las unidades abren puertas y ya no dejan de cavar por un enemigo tras una pared. El laboratorio salió del pack a `tools/lab/`.
-- **Hallazgo clave:** la bola y el estancamiento venían sobre todo de la meta invisible del corazón. Con los arreglos, 47 bajas invasoras en lugar de 26 y 462 bloques derribados en lugar de 215, pero la batalla aún se estanca desde el minuto 5,5.
-- **Siguiente paso:** Limbers decide si se hace «la caza» antes de la Fase 2: sin meta fija, van a por el enemigo vivo más cercano y abren camino con el planificador. Recomendación: sí. Detalle en [IA.md](IA.md), «Plan propuesto».
-- **Sin probar por Limbers:** v0.1.21 en la tablet y en una batalla completa.
+- **Fase actual:** investigación de la IA, cerrada. Resultados en [IA.md](IA.md); empieza por «Conclusiones» y «Batalla real».
+- **Último cambio:** la caza. Sin meta central, los invasores van a por el enemigo vivo más cercano y se abren camino con una ruta calculada.
+- **Resultado:** la batalla de referencia ya no se estancó: mataron a todos los aliados y derrotaron al jugador hacia el minuto 8, con 126 bloques derribados. Es una sola batalla.
+- **Confirmado por Limbers (2026-11-05):** «se sintió bastante mejor»; rompieron el castillo por un lado e invadieron. Pidió las peleas un poco más frenéticas.
+- **Siguiente paso:** empezar la Fase 2, unidades estándar.
+- **Vigilar:** el 73 % de las búsquedas de ruta agotan su límite. La tablet jugó conectada al servidor de la PC, así que falta medir las búsquedas con la partida corriendo dentro de la tablet.
 - **Pendiente de decidir:** ver «Decisiones abiertas».
 
 ## Fases
@@ -97,9 +98,12 @@ Arreglos pequeños propuestos antes de la Fase 2:
 - [x] Repetir la batalla de referencia hasta el final y comparar.
 - [x] Quitar el laboratorio del pack: ahora está en `tools/lab/`.
 
-Propuesta, sin aprobar:
+La caza:
 
-- [ ] La caza: sin meta fija, a por el enemigo vivo más cercano, abriendo camino con el planificador.
+- [x] Sin meta central: a por el enemigo vivo más cercano, abriendo camino con el planificador.
+- [x] Batalla de referencia hasta el final, sin estancarse (una vez, con el jugador conectado).
+- [x] Limbers la prueba en juego y le convence.
+- [ ] Medir el coste de las búsquedas con la partida corriendo dentro de la tablet (POCO Pad, Snapdragon 7s Gen 2, 8 GB).
 
 ### Fase 2, unidades estándar
 
@@ -149,10 +153,10 @@ Para que no se pelee en bolita ni a toda velocidad.
 
 ## Decisiones abiertas
 
-- **La caza antes de la Fase 2.** Quitar la meta del corazón y hacer que vayan a por el enemigo vivo más cercano. Falta decidir qué pasa fuera de la zona rompible y con un jugador inalcanzable.
+- **Límites de la caza.** Hoy no se rompe nada fuera de la zona de asedio, el modo creativo no es presa y los aliados no se abren paso. Falta decidir si se queda así.
 - **Parejas o grupos repartidos.** Las parejas 1 contra 1 no redujeron la bolita, duplicaron el ritmo y bajaron el servidor a 4,7 ticks/s con 100 contra 100. Propuesta: sustituirlas en la Fase 3 por grupos con destinos distintos, aún sin probar.
 - **Unidad atorada en el regreso.** Si un invasor se atasca para siempre, la oleada no termina. Hoy no hay teletransporte, porque no se quiere. Opción: usarlo solo como último recurso tras varios minutos sin avanzar.
-- **Invasores que llegan al centro.** Sin aliados vivos, se quedan en el corazón del castillo y la oleada no termina. Se resuelve con la regla de derrota de la Fase 4.
+- **Oleada sin jugadores que cazar.** Con la caza, sin aliados vivos van a por el jugador y la partida termina al agotar sus vidas. Si todos los jugadores están en creativo o desconectados, no termina. Se resuelve con la regla de derrota de la Fase 4.
 - **Aliados al otro lado del muro.** Quien cae regresa por el puente y queda fuera hasta que el muro se abre. Hoy pelea ahí.
 
 - **Regla de derrota.** Hoy se pierde solo al agotar las vidas de los jugadores. Propuesta: perder también cuando no quedan aliados ni reservas.

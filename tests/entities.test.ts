@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ALLY_FIGHT_EVENT, ALLY_PATROL_EVENT, ENTITY_IDS, FAMILY, MAX_RETURN_STAGES, RALLY_TAG, RETURN_EVENT, SOLDIER_MARCH_EVENT, WIZARD_ASSAULT_EVENT, WIZARD_SIEGE_EVENT } from "../scripts/constants";
+import { ALLY_FIGHT_EVENT, ALLY_PATROL_EVENT, ENTITY_IDS, FAMILY, HUNT_TRAILS, huntTrailTag, MAX_RETURN_STAGES, RALLY_TAG, RETURN_EVENT, SOLDIER_MARCH_EVENT, WIZARD_ASSAULT_EVENT, WIZARD_SIEGE_EVENT } from "../scripts/constants";
 
 const readEntity = (name: string) =>
   JSON.parse(readFileSync(`behavior_packs/bastion/entities/${name}.json`, "utf-8"))["minecraft:entity"];
@@ -106,6 +106,21 @@ describe("inteligencia de objetivos", () => {
     expect(goal.must_reach).toBeUndefined();
     expect(JSON.stringify(goal.entity_types)).toContain(FAMILY.objective);
     expect(goal.priority).toBeGreaterThan(foes.priority);
+  });
+
+  it("el soldado invasor caza: sigue su rastro, si no va al enemigo vivo más cercano, y la puerta queda para el final", () => {
+    const types = readEntity("invader_soldier").component_groups["bastion:march"]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types as { priority: number }[];
+    expect(types).toHaveLength(HUNT_TRAILS + 2);
+    for (let slot = 0; slot < HUNT_TRAILS; slot++) {
+      expect(types[slot].priority).toBe(0);
+      expect(JSON.stringify(types[slot])).toContain(huntTrailTag(slot));
+    }
+    const [prey, gate] = types.slice(HUNT_TRAILS);
+    expect(prey.priority).toBe(1);
+    expect(JSON.stringify(prey)).toContain(FAMILY.ally);
+    expect(JSON.stringify(prey)).toContain("player");
+    expect(gate.priority).toBe(2);
+    expect(JSON.stringify(gate)).toContain(FAMILY.objective);
   });
 
   it("todas las unidades que caminan saben abrir puertas", () => {

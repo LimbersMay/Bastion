@@ -25,7 +25,7 @@ describe("inFightRange", () => {
 
 describe("digPlan", () => {
   it("en terreno llano abre un hueco de dos bloques hacia la meta", () => {
-    const plan = digPlan({ x: -50.5, y: 124, z: -470.5 }, heart);
+    const plan = digPlan({ x: -50.5, y: 124, z: -470.5 }, heart, 12);
     expect(plan).toEqual([
       { x: -51, y: 125, z: -470 },
       { x: -51, y: 124, z: -470 },
@@ -33,7 +33,7 @@ describe("digPlan", () => {
   });
 
   it("si la meta queda arriba abre un escalón y deja el bloque que va a pisar", () => {
-    const plan = digPlan({ x: -50.5, y: 113, z: -470.5 }, heart);
+    const plan = digPlan({ x: -50.5, y: 113, z: -470.5 }, heart, 12);
     expect(plan).toContainEqual({ x: -51, y: 115, z: -471 });
     expect(plan).toContainEqual({ x: -51, y: 115, z: -470 });
     expect(plan).toContainEqual({ x: -51, y: 114, z: -470 });
@@ -41,16 +41,16 @@ describe("digPlan", () => {
   });
 
   it("avanza por el eje en el que queda más lejos", () => {
-    const plan = digPlan({ x: -100.5, y: 124, z: -440.5 }, heart);
+    const plan = digPlan({ x: -100.5, y: 124, z: -440.5 }, heart, 12);
     expect(plan.every((b) => b.x === -100 && b.z === -441)).toBe(true);
   });
 
   it("no cava si ya está dentro, junto al corazón del castillo", () => {
-    expect(digPlan({ x: -48, y: 124, z: -432 }, heart)).toEqual([]);
+    expect(digPlan({ x: -48, y: 124, z: -432 }, heart, 12)).toEqual([]);
   });
 
   it("no abre el suelo: quien está por encima de la meta no cava", () => {
-    expect(digPlan({ x: -50.5, y: 132, z: -470.5 }, heart)).toEqual([]);
+    expect(digPlan({ x: -50.5, y: 132, z: -470.5 }, heart, 12)).toEqual([]);
   });
 });
 

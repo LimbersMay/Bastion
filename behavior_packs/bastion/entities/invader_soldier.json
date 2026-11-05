@@ -61,12 +61,193 @@
           "entity_types": [
             {
               "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_trail_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_trail_0"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_trail_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_trail_1"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_trail_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_trail_2"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_trail_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_trail_3"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_trail_4"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_trail_4"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_trail_5"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_trail_5"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_trail_6"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_trail_6"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_trail_7"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_trail_7"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_ally"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "player"
+                      }
+                    ]
+                  },
+                  {
+                    "any_of": [
+                      {
+                        "test": "in_water",
+                        "subject": "other",
+                        "operator": "!=",
+                        "value": true
+                      },
+                      {
+                        "test": "in_water",
+                        "subject": "self",
+                        "value": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
                 "test": "is_family",
                 "subject": "other",
                 "value": "bastion_objective"
               },
-              "max_dist": 100,
-              "priority": 0
+              "max_dist": 256,
+              "priority": 2
             }
           ]
         }
