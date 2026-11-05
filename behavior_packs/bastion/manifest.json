@@ -1,0 +1,58 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Bastion BP",
+    "description": "Motor de asedio: puerta con barra de vida, oleadas, brecha y aliados con IA.",
+    "uuid": "06c0746f-e81c-4d54-939f-531beafc2dab",
+    "version": [
+      0,
+      1,
+      10
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      90
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "f7e25ee3-1f8a-4d70-b709-d89f3fcca161",
+      "version": [
+        0,
+        1,
+        10
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "99844152-dffd-4f97-8648-785d3847664a",
+      "entry": "scripts/main.js",
+      "version": [
+        0,
+        1,
+        10
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "3bc522fa-74d7-4b4d-80d9-335fde6921b4",
+      "version": [
+        0,
+        1,
+        10
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.0.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.0.0"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+entity.bastion:ally_soldier.name=Soldado aliado
+entity.bastion:invader_soldier.name=Soldado invasor
+entity.bastion:gate_core.name=Puerta principal
+item.spawn_egg.entity.bastion:ally_soldier.name=Huevo generador de soldado aliado
+item.spawn_egg.entity.bastion:invader_soldier.name=Huevo generador de soldado invasor
+item.spawn_egg.entity.bastion:gate_core.name=Huevo generador de puerta principal

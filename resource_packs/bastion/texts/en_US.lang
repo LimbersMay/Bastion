@@ -1,0 +1,6 @@
+entity.bastion:ally_soldier.name=Allied Soldier
+entity.bastion:invader_soldier.name=Invader Soldier
+entity.bastion:gate_core.name=Main Gate
+item.spawn_egg.entity.bastion:ally_soldier.name=Allied Soldier Spawn Egg
+item.spawn_egg.entity.bastion:invader_soldier.name=Invader Soldier Spawn Egg
+item.spawn_egg.entity.bastion:gate_core.name=Main Gate Spawn Egg

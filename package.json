@@ -1,0 +1,29 @@
+{
+  "name": "bastion",
+  "version": "0.1.0",
+  "productName": "Bastion - Motor de asedio para Minecraft Bedrock",
+  "description": "Addon de invasion y defensa: castillos, fortalezas y villas asediados por oleadas.",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "just-scripts build",
+    "build:production": "just-scripts build --production",
+    "clean": "just-scripts clean",
+    "local-deploy": "just-scripts local-deploy",
+    "mcaddon": "just-scripts mcaddon",
+    "mcaddon:production": "just-scripts mcaddon --production",
+    "art": "node tools/gen-placeholder-art.mjs"
+  },
+  "devDependencies": {
+    "@minecraft/core-build-tasks": "^5.5.0",
+    "source-map": "^0.7.4",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "@minecraft/server": "2.0.0",
+    "@minecraft/server-ui": "2.0.0"
+  }
+}

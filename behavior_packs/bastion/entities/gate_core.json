@@ -1,0 +1,188 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "bastion:gate_core",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "component_groups": {
+      "bastion:hp_150": {
+        "minecraft:health": {
+          "value": 150,
+          "max": 150
+        }
+      },
+      "bastion:hp_300": {
+        "minecraft:health": {
+          "value": 300,
+          "max": 300
+        }
+      },
+      "bastion:hp_600": {
+        "minecraft:health": {
+          "value": 600,
+          "max": 600
+        }
+      },
+      "bastion:hp_1200": {
+        "minecraft:health": {
+          "value": 1200,
+          "max": 1200
+        }
+      },
+      "bastion:hp_2400": {
+        "minecraft:health": {
+          "value": 2400,
+          "max": 2400
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "bastion_gate"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 3,
+        "height": 4
+      },
+      "minecraft:health": {
+        "value": 300,
+        "max": 300
+      },
+      "minecraft:boss": {
+        "hud_range": 64,
+        "name": "Puerta principal"
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1
+      },
+      "minecraft:persistent": {},
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:fire_immune": {},
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "on_damage": {
+              "filters": {
+                "any_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_ally"
+                  },
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "player"
+                  }
+                ]
+              }
+            },
+            "deals_damage": "no"
+          },
+          {
+            "cause": "fall",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "suffocation",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "drowning",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "lava",
+            "deals_damage": "no"
+          }
+        ]
+      }
+    },
+    "events": {
+      "bastion:hp_150": {
+        "add": {
+          "component_groups": [
+            "bastion:hp_150"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "bastion:hp_300",
+            "bastion:hp_600",
+            "bastion:hp_1200",
+            "bastion:hp_2400"
+          ]
+        }
+      },
+      "bastion:hp_300": {
+        "add": {
+          "component_groups": [
+            "bastion:hp_300"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "bastion:hp_150",
+            "bastion:hp_600",
+            "bastion:hp_1200",
+            "bastion:hp_2400"
+          ]
+        }
+      },
+      "bastion:hp_600": {
+        "add": {
+          "component_groups": [
+            "bastion:hp_600"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "bastion:hp_150",
+            "bastion:hp_300",
+            "bastion:hp_1200",
+            "bastion:hp_2400"
+          ]
+        }
+      },
+      "bastion:hp_1200": {
+        "add": {
+          "component_groups": [
+            "bastion:hp_1200"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "bastion:hp_150",
+            "bastion:hp_300",
+            "bastion:hp_600",
+            "bastion:hp_2400"
+          ]
+        }
+      },
+      "bastion:hp_2400": {
+        "add": {
+          "component_groups": [
+            "bastion:hp_2400"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "bastion:hp_150",
+            "bastion:hp_300",
+            "bastion:hp_600",
+            "bastion:hp_1200"
+          ]
+        }
+      }
+    }
+  }
+}

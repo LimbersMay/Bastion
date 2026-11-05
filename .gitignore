@@ -1,0 +1,21 @@
+node_modules/
+dist/
+lib/
+*.mcaddon
+*.mcpack
+*.log
+*.mcworld
+# Mapas de terceros (derechos de su autor): no se versionan
+The Combat Castle fix v1/
+
+# Skins de terceros (autor/licencia sin confirmar)
+assets/skins/
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Mundos de terceros descargados (solo se versiona su README)
+assets/worlds/*
+!assets/worlds/README.md
