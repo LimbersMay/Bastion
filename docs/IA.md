@@ -2,7 +2,7 @@
 
 Investigación previa a la Fase 2 (2026-11-05). Reúne dos temas que resultaron ser uno: **cómo se comporta cada unidad** y **cómo se mueve por mapas enormes**.
 
-Salvo que se indique otra cosa, las medidas son del servidor de prueba en la PC, sin jugador conectado, en Old Fallen Castle y con unidades de laboratorio. Nada de esto se ha probado aún en la tablet ni aplicado a las unidades reales.
+Salvo que se indique otra cosa, las medidas son del servidor de prueba en la PC, sin jugador conectado, en Old Fallen Castle y con unidades de laboratorio. Nada de esto se ha probado aún en la tablet. Los arreglos pequeños ya están en las unidades reales (v0.1.21); la caza y los grupos, no.
 
 ## Conclusiones
 
@@ -15,7 +15,8 @@ Salvo que se indique otra cosa, las medidas son del servidor de prueba en la PC,
 | ¿Rutas en mapas enormes? | Se pueden repartir entre ticks: el peor tick bajó de 284 a 29 ms. | Medido una vez, sin batalla |
 | ¿Sirve para el rescate? | Sí: 6 de 6 llegaron a una sala cerrada en 13 s. | Sin jugador real |
 | ¿Sirven las parejas 1 contra 1? | **No como las probé:** no reducen la bolita, duplican el ritmo y hunden el servidor a 100 contra 100. | Medido |
-| ¿Qué es entonces la bolita? | Sobre todo unidades de más en poco espacio: golpean pocas y las demás empujan. | Apoyado en medidas, sin probar la solución |
+| ¿Qué es entonces la bolita? | Dos cosas: **la meta única e indestructible del corazón**, que los reúne a todos, y unidades de más en poco espacio. | Lo primero, medido en batalla; lo segundo, apoyado en medidas |
+| ¿Por qué se estancan las batallas? | Se quedan sin nadie alcanzable y la excavación solo apunta al corazón. | En parte medido; la causa exacta del segundo estancamiento, leída en el código |
 
 ## Lo que se vio en el juego
 
@@ -25,6 +26,30 @@ Salvo que se indique otra cosa, las medidas son del servidor de prueba en la PC,
 - Todo eso estancó la batalla de 200 contra 200.
 
 Una batalla de referencia con 30 aliados y 60 soldados invasores, más los de las oleadas, apunta en la misma dirección. Los bloques derribados por cada 30 s fueron 38, 87, 70, 31, 23 y 11, y casi ninguno desde el minuto 3,5. A los 5,5 minutos quedaban 46 invasores y 12 aliados, a 20 ticks/s. La prueba se cortó ahí y no se registró dónde estaban, así que no demuestra la causa por sí sola.
+
+## Batalla real: la meta del corazón
+
+Es la medida más importante de este documento, y salió después de las demás. Son 30 aliados y 60 soldados invasores con las unidades reales, sin piromanos, durante 9 minutos, con y sin los arreglos pequeños. El jugador se conectó a mitad de la primera y casi desde el inicio de la segunda, y no sé cuánto influyó.
+
+| Al final | Antes | Con arreglos (v0.1.21) |
+|---|---|---|
+| Invasores y aliados vivos | 50 y 9 | 29 y 3 |
+| Bajas de invasores y de aliados | 26 y 25 | 47 y 31 |
+| Bloques derribados | 215 | 462 |
+| Último minuto con combate o excavación | Hacia el 4 a 6 | Hacia el 5,5 |
+| Invasores en el patio | 31 | 14 (8 junto a la meta) |
+
+**Causa de la bola de la captura:** `bastion:objective`, la meta invisible del corazón, contaba como un objetivo más. Al ser lo más cercano al llegar, nadie la soltaba, y como no muere, se quedaban golpeándola para siempre. Unos 31 de 50 estaban a 3 bloques o menos de ella, y los aliados a unos 22 bloques, sin que nadie los atacara.
+
+**Qué cambió el arreglo:** la meta pasa a ser el último recurso, detrás de cualquier enemigo alcanzable. A los 8 minutos no había nadie junto a ella y se derribó el doble.
+
+**Qué no resuelve:**
+
+- Sin nadie alcanzable, vuelven a la meta: a los 9 minutos ya había 8 junto a ella.
+- La batalla se estanca igual desde el minuto 5,5. Los 3 aliados vivos estaban en la ladera oeste, unos 15 bloques por debajo del patio, y 8 invasores en el agua.
+- Causas probables, leídas en el código: la excavación apunta siempre al corazón, se detiene a 12 bloques de él aunque la unidad esté dentro de la roca, y la meta solo se detecta a 100 bloques.
+
+**Las peleas de las tablas siguientes no tenían meta,** así que no podían mostrar nada de esto. Por eso mi primera conclusión, que la bolita era sobre todo densidad, estaba incompleta.
 
 ## Qué se puede hacer
 
@@ -41,7 +66,8 @@ La API estable no permite ordenar una ruta ni elegir el objetivo de un mob: `Ent
 | `must_reach` | Atacar solo a quien se pueda alcanzar. | Sin coste visible; falta verlo en batalla |
 | `minecraft:pushable_by_entity` | Ajustar cuánto se empujan entre sí, quizá para separarlas. | Sin probar |
 | `minecraft:break_blocks` | Romper bloques al caminar. | Sin probar; rompe sin elegir |
-| `minecraft:behavior.break_door` | Derribar puertas. | Descartado: la documentación lo da por sustituido |
+| `minecraft:annotation.break_door` | Derribar puertas (12 s). Exige `can_break_doors` y, por defecto, dificultad difícil. | Sin probar; idea para invasores |
+| `minecraft:behavior.break_door` | Derribar puertas a la antigua. | Descartado: ninguna entidad del juego lo usa |
 
 ### No oficial
 
@@ -131,7 +157,7 @@ El código ya tiene una especie de máquina de estados: los grupos de componente
 | Defensa | Alcanzables a 16 | Defender el punto de reunión | Orden |
 | Regreso | Enemigos a 12; hitos de la ruta | Volver a pie desde el agua | Termina la ruta |
 
-**Problemas:** todos comparten el mismo marcador de salida, de ahí la bola en el puente. No tiene `annotation.open_door`, y hay que confirmar en una unidad real que eso es lo que los frena.
+**Problemas:** todos comparten el mismo marcador de salida, de ahí la bola en el puente. Ya abre puertas (v0.1.21), pero falta confirmar en el juego si eso los saca del castillo. No cava: si cae fuera, como los 3 de la batalla de referencia, depende de encontrar camino.
 
 ### Mago aliado (30 de vida)
 
@@ -141,19 +167,23 @@ Igual que el soldado, pero dispara y exige ver al objetivo. No se mueve hacia é
 
 | Estado | Percibe | Quiere | Cambia de idea cuando |
 |---|---|---|---|
-| Marcha | Enemigos y la meta a 100, sin exigir camino | Llegar al corazón del castillo | Cae al agua |
+| Marcha | Enemigos alcanzables a 100; si no hay, la meta a 100 | Llegar al corazón del castillo | Cae al agua |
 | Regreso | Enemigos a 12; hitos de la ruta | Volver a pie | Termina la ruta |
 
 Además, el script `sappers.ts` lo pone a cavar si avanza menos de 1,2 bloques en 3 s.
 
-**Problemas, leídos en el código y sin medir en batalla:**
+**Arreglado en v0.1.21:**
 
-- **Se empeña en lo inalcanzable.** Como no exige camino, persigue a un enemigo que tiene debajo. Encaja con la bolita que viste.
-- **Deja de cavar sin motivo.** `isFighting` cuenta a cualquier enemigo a 3,5 bloques aunque haya una pared o un suelo en medio. Encaja con «no intenta romper nada».
-- **Nunca cava hacia abajo.** `digPlan` no lo contempla.
+- Persigue solo a quien puede alcanzar, y la meta queda como último recurso.
+- `isFighting` ya no cuenta a un enemigo en otro piso o tras una pared, así que ya no deja de cavar por eso.
+- Abre puertas con `annotation.open_door`.
+- Sin `behavior.break_door`, que ninguna entidad usa, ni `can_break_doors`, que sin `annotation.break_door` no servía para derribar.
+
+**Problemas que siguen, leídos en el código:**
+
 - **Solo cava hacia el corazón,** aunque su enemigo real esté en otro sitio.
-- **No abre puertas.** Falta `annotation.open_door`.
-- **Tiene componentes sin efecto:** `behavior.break_door` y `can_break_doors`, que el juego ya no usa así.
+- **Se detiene a 12 bloques del corazón,** aunque esté bajo tierra.
+- **Nunca cava hacia abajo.** `digPlan` no lo contempla.
 
 ### Mago invasor (24 de vida)
 
@@ -190,13 +220,26 @@ No está probado todavía. Es la consecuencia lógica de los datos: separar y re
 
 ## Plan propuesto
 
-### Antes de la Fase 2: arreglos pequeños en las unidades actuales
+### Hecho: arreglos pequeños (v0.1.21)
 
-1. `annotation.open_door` en todas las unidades que caminan.
-2. `isFighting`: no contar a quien esté detrás de un muro o en otro piso.
-3. `must_reach` en el combate del invasor, con la meta como alternativa, y comprobar que no se quedan quietos.
-4. Quitar `behavior.break_door` y `can_break_doors`, que no hacen nada.
-5. Repetir la batalla de referencia hasta el final para medir si deja de estancarse.
+Puertas, `isFighting`, `must_reach` con la meta como último recurso y limpieza de componentes. Mejoran mucho, pero la batalla aún se estanca (ver «Batalla real»).
+
+### Propuesta sin aprobar: la caza, antes de la Fase 2
+
+Idea de Limbers: sin meta fija. Su objetivo es acabar con los vivos, y derriban lo que les estorbe.
+
+1. Quitar la meta del corazón. La de la puerta del puente se queda, porque también marca la brecha.
+2. Quien no tiene objetivo alcanzable va a por el enemigo vivo más cercano, sea aliado o jugador. No solo a por el último jugador: si no, la bola se forma a su alrededor y los aliados sobran. Cuando solo queda el jugador, sí van todos a por él.
+3. Si no puede llegar, abre camino con el planificador de rutas, no en línea recta: rompe solo lo necesario.
+4. Repetir la batalla de referencia y comparar con la tabla de arriba.
+
+**Por decidir:**
+
+- Qué pasa si el jugador se aleja de la zona rompible, porque hoy no se cava en el puente ni en la orilla.
+- Qué hacen si nadie es alcanzable, por ejemplo con un jugador volando.
+- Si los aliados también deben abrirse paso.
+
+Los **grupos** no son necesarios para esto y pueden esperar a la Fase 3, cuando las fichas de la Fase 2 permitan añadirlos en un solo sitio.
 
 ### Fase 2: fichas de unidad
 
@@ -234,7 +277,7 @@ El planificador de rutas no depende del mapa: solo lee bloques. Lo propio de cad
 ## Código de esta investigación
 
 - `scripts/systems/routeLogic.ts` y `tests/routeLogic.test.ts`: planificador puro, con pruebas. Se conserva.
-- `scripts/lab/` y `behavior_packs/bastion/entities/lab_*.json`: laboratorio temporal. **Hay que quitarlo antes de cualquier versión para jugar.**
+- `tools/lab/`: laboratorio y batalla de referencia, fuera del pack. Cómo activarlo y usarlo: [tools/lab/README.md](../tools/lab/README.md).
 
 ## Fuentes
 
@@ -248,6 +291,7 @@ El planificador de rutas no depende del mapa: solo lee bloques. Lo propio de cad
 - [`navigation.walk`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_navigation.walk)
 - [`pushable_by_entity`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_pushable_by_entity)
 - [`annotation.open_door`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_annotation_open_door)
+- [`annotation.break_door`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_annotation_break_door)
 - [`break_door`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitygoals/minecraftbehavior_break_door)
 - [`break_blocks`](https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/examples/entitycomponents/minecraftcomponent_break_blocks)
 - [Endstone](https://pypi.org/project/endstone)

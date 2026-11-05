@@ -1,9 +1,27 @@
 import { describe, expect, it } from "vitest";
 import { CasualtyLog } from "../scripts/systems/casualties";
-import { digPlan, GATE_WALL_HITS, hitsToBreak, isUnbreakable, nearBox } from "../scripts/systems/digLogic";
+import { digPlan, GATE_WALL_HITS, hitsToBreak, inFightRange, isUnbreakable, nearBox } from "../scripts/systems/digLogic";
 import { reinforcementsDue } from "../scripts/systems/wavePlan";
 
 const heart = { x: -50, y: 124, z: -437 };
+
+describe("inFightRange", () => {
+  const unit = { x: 0, y: 100, z: 0 };
+
+  it("cuenta al enemigo cercano en el mismo piso, aunque esté en un escalón", () => {
+    expect(inFightRange(unit, { x: 2, y: 100, z: 2 })).toBe(true);
+    expect(inFightRange(unit, { x: 2, y: 101, z: 0 })).toBe(true);
+  });
+
+  it("no cuenta al enemigo de otro piso aunque esté justo encima o debajo", () => {
+    expect(inFightRange(unit, { x: 0, y: 104, z: 0 })).toBe(false);
+    expect(inFightRange(unit, { x: 0, y: 96, z: 0 })).toBe(false);
+  });
+
+  it("no cuenta al enemigo lejano", () => {
+    expect(inFightRange(unit, { x: 4, y: 100, z: 0 })).toBe(false);
+  });
+});
 
 describe("digPlan", () => {
   it("en terreno llano abre un hueco de dos bloques hacia la meta", () => {

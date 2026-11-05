@@ -7,12 +7,13 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-05. Versión de los packs: 0.1.20. Último commit: el de la investigación de la IA.*
+*Última actualización: 2026-11-05. Versión de los packs: 0.1.21. Rama: `feature/old-fallen-castle`, sin subir. Último commit: los arreglos pequeños de la IA.*
 
-- **Fase actual:** investigación de la IA, antes de la Fase 2. Resultados en [IA.md](IA.md).
-- **Último cambio:** planificador de rutas probado en el servidor y peleas medidas; ninguna unidad real ha cambiado.
-- **Siguiente paso:** decidir el cambio de la Fase 3 y hacer los arreglos pequeños en las unidades actuales.
-- **Importante:** el laboratorio (`scripts/lab/` y `entities/lab_*.json`) sigue en la copia de trabajo, sin commit, y entra en el pack al compilar. Hay que quitarlo antes de una versión para jugar.
+- **Fase actual:** investigación de la IA, antes de la Fase 2. Resultados en [IA.md](IA.md); empieza por «Conclusiones» y «Batalla real».
+- **Último cambio:** los invasores persiguen primero a quien pueden alcanzar, todas las unidades abren puertas y ya no dejan de cavar por un enemigo tras una pared. El laboratorio salió del pack a `tools/lab/`.
+- **Hallazgo clave:** la bola y el estancamiento venían sobre todo de la meta invisible del corazón. Con los arreglos, 47 bajas invasoras en lugar de 26 y 462 bloques derribados en lugar de 215, pero la batalla aún se estanca desde el minuto 5,5.
+- **Siguiente paso:** Limbers decide si se hace «la caza» antes de la Fase 2: sin meta fija, van a por el enemigo vivo más cercano y abren camino con el planificador. Recomendación: sí. Detalle en [IA.md](IA.md), «Plan propuesto».
+- **Sin probar por Limbers:** v0.1.21 en la tablet y en una batalla completa.
 - **Pendiente de decidir:** ver «Decisiones abiertas».
 
 ## Fases
@@ -89,12 +90,16 @@ Documento: [IA.md](IA.md). Une el análisis de comportamiento y la investigació
 
 Arreglos pequeños propuestos antes de la Fase 2:
 
-- [ ] Abrir puertas en todas las unidades que caminan.
-- [ ] No contar como pelea a un enemigo detrás de un muro o en otro piso.
-- [ ] Atacar solo a quien se pueda alcanzar, con la meta como alternativa.
-- [ ] Quitar `behavior.break_door` y `can_break_doors`, que no hacen nada.
-- [ ] Repetir la batalla de referencia hasta el final y comparar.
-- [ ] Quitar el laboratorio del pack.
+- [x] Abrir puertas en todas las unidades que caminan.
+- [x] No contar como pelea a un enemigo detrás de un muro o en otro piso.
+- [x] Atacar solo a quien se pueda alcanzar, con la meta como último recurso.
+- [x] Quitar `behavior.break_door` y `can_break_doors`.
+- [x] Repetir la batalla de referencia hasta el final y comparar.
+- [x] Quitar el laboratorio del pack: ahora está en `tools/lab/`.
+
+Propuesta, sin aprobar:
+
+- [ ] La caza: sin meta fija, a por el enemigo vivo más cercano, abriendo camino con el planificador.
 
 ### Fase 2, unidades estándar
 
@@ -144,7 +149,8 @@ Para que no se pelee en bolita ni a toda velocidad.
 
 ## Decisiones abiertas
 
-- **Parejas o grupos repartidos.** Las parejas 1 contra 1 no redujeron la bolita, duplicaron el ritmo y bajaron el servidor a 4,7 ticks/s con 100 contra 100. Propuesta: sustituirlas por grupos con destinos distintos, aún sin probar.
+- **La caza antes de la Fase 2.** Quitar la meta del corazón y hacer que vayan a por el enemigo vivo más cercano. Falta decidir qué pasa fuera de la zona rompible y con un jugador inalcanzable.
+- **Parejas o grupos repartidos.** Las parejas 1 contra 1 no redujeron la bolita, duplicaron el ritmo y bajaron el servidor a 4,7 ticks/s con 100 contra 100. Propuesta: sustituirlas en la Fase 3 por grupos con destinos distintos, aún sin probar.
 - **Unidad atorada en el regreso.** Si un invasor se atasca para siempre, la oleada no termina. Hoy no hay teletransporte, porque no se quiere. Opción: usarlo solo como último recurso tras varios minutos sin avanzar.
 - **Invasores que llegan al centro.** Sin aliados vivos, se quedan en el corazón del castillo y la oleada no termina. Se resuelve con la regla de derrota de la Fase 4.
 - **Aliados al otro lado del muro.** Quien cae regresa por el puente y queda fuera hasta que el muro se abre. Hoy pelea ahí.

@@ -327,6 +327,7 @@
         "can_open_doors": true,
         "avoid_water": true
       },
+      "minecraft:annotation.open_door": {},
       "minecraft:movement.basic": {},
       "minecraft:jump.static": {},
       "minecraft:can_climb": {},

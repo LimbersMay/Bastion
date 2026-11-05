@@ -8,6 +8,11 @@ const HEART_REACHED = 12;
 /** Bloques que nadie rompe: los del propio juego, y los que guardan algo que se perdería al romperlos. */
 const UNBREAKABLE = /bedrock|barrier|command_block|structure_|border_block|:allow|:deny|portal|light_block|reinforced_deepslate|chest|barrel|shulker|hopper|dispenser|dropper|furnace|smoker|sign|banner|lectern|jukebox|spawner|:bed$/;
 
+/** Quien tiene un enemigo a esta distancia, en su mismo piso, está peleando y no atascado. */
+export const FIGHT_DISTANCE = 3.5;
+/** Más desnivel que esto ya es otro piso: el enemigo de arriba o de abajo no se alcanza. */
+const FIGHT_HEIGHT = 1.5;
+
 /** Un bloque del muro de la puerta aguanta mucho más que una pared: los soldados lo abren despacio, los magos rápido. */
 export const GATE_WALL_HITS = 15;
 
@@ -56,6 +61,11 @@ export function digPlan(feet: Vec3, goal: Vec3, reached = HEART_REACHED): Vec3[]
     { x: ahead.x, y: y + 1, z: ahead.z },
     { x: ahead.x, y, z: ahead.z },
   ];
+}
+
+/** ¿Está `foe` lo bastante cerca y en el mismo piso para pelear? La pared en medio se comprueba aparte, en el juego. */
+export function inFightRange(unit: Vec3, foe: Vec3, distance = FIGHT_DISTANCE, height = FIGHT_HEIGHT): boolean {
+  return Math.hypot(foe.x - unit.x, foe.z - unit.z) <= distance && Math.abs(foe.y - unit.y) <= height;
 }
 
 /** ¿Está `p` a `margin` bloques o menos de la caja, en cada eje? */

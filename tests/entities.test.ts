@@ -97,6 +97,25 @@ describe("inteligencia de objetivos", () => {
     expect(wizard.events[WIZARD_ASSAULT_EVENT].add.component_groups).toContain("bastion:assault");
   });
 
+  it("el soldado invasor solo persigue a quien puede alcanzar; si no hay nadie, va a la meta", () => {
+    const march = readEntity("invader_soldier").component_groups["bastion:march"];
+    const foes = march["minecraft:behavior.nearest_attackable_target"];
+    const goal = march["minecraft:behavior.nearest_prioritized_attackable_target"];
+    expect(foes.must_reach).toBe(true);
+    expect(JSON.stringify(foes.entity_types)).not.toContain(FAMILY.objective);
+    expect(goal.must_reach).toBeUndefined();
+    expect(JSON.stringify(goal.entity_types)).toContain(FAMILY.objective);
+    expect(goal.priority).toBeGreaterThan(foes.priority);
+  });
+
+  it("todas las unidades que caminan saben abrir puertas", () => {
+    for (const name of ["invader_soldier", "invader_wizard", "ally_soldier", "ally_wizard"]) {
+      const components = readEntity(name).components;
+      expect(components["minecraft:navigation.walk"].can_open_doors).toBe(true);
+      expect(components["minecraft:annotation.open_door"]).toBeDefined();
+    }
+  });
+
   it("los aliados en combate solo eligen invasores alcanzables y vuelven a su puesto", () => {
     const fight = readEntity("ally_soldier").component_groups["bastion:fight"];
     expect(fight["minecraft:behavior.nearest_attackable_target"].must_reach).toBe(true);

@@ -1,7 +1,7 @@
 import type { BlockPermutation, Dimension, Entity } from "@minecraft/server";
 import { ENTITY_IDS, FAMILY } from "../constants";
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
-import { digPlan, GATE_WALL_HITS, hitsToBreak, isUnbreakable, nearBox } from "./digLogic";
+import { digPlan, FIGHT_DISTANCE, GATE_WALL_HITS, hitsToBreak, inFightRange, isUnbreakable, nearBox } from "./digLogic";
 import { isReturning } from "./returnPath";
 import { isFreeSpace } from "./spawnPoint";
 import { inBox } from "./wallLogic";
@@ -12,8 +12,8 @@ const STALL_SECONDS = 3;
 const STALL_DISTANCE = 1.2;
 /** Golpes a paredes por segundo en todo el mapa, para acotar el coste en una batalla grande. */
 const MAX_BITES_PER_TICK = 20;
-/** Quien tiene un enemigo a esta distancia está peleando, no atascado. */
-const FIGHT_DISTANCE = 3.5;
+/** Altura de la cabeza sobre los pies, para mirar si hay una pared entre dos unidades. */
+const HEAD_HEIGHT = 1.5;
 /** A esta distancia de un muro de puerta, un soldado detenido se pone a golpearlo. */
 const GATE_WALL_REACH = 2.5;
 
@@ -68,9 +68,23 @@ export class Sappers {
     return { at, still: 0 };
   }
 
+  /** Solo cuenta quien se puede golpear: un enemigo tras una pared o en otro piso no impide cavar. */
   private isFighting(unit: Entity): boolean {
     const near = { location: unit.location, maxDistance: FIGHT_DISTANCE };
-    return this.dimension.getEntities({ ...near, families: [FAMILY.ally] }).length > 0 || this.dimension.getPlayers(near).length > 0;
+    const foes = [...this.dimension.getEntities({ ...near, families: [FAMILY.ally] }), ...this.dimension.getPlayers(near)];
+    return foes.some((foe) => inFightRange(unit.location, foe.location) && !this.wallBetween(unit.location, foe.location));
+  }
+
+  private wallBetween(from: Vec3, to: Vec3): boolean {
+    const direction = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z };
+    const length = Math.hypot(direction.x, direction.y, direction.z);
+    if (length === 0) return false;
+    const hit = this.dimension.getBlockFromRay(
+      { x: from.x, y: from.y + HEAD_HEIGHT, z: from.z },
+      { x: direction.x / length, y: direction.y / length, z: direction.z / length },
+      { maxDistance: length, includeLiquidBlocks: false, includePassableBlocks: false }
+    );
+    return hit !== undefined;
   }
 
   private isProtected(at: Vec3): boolean {
