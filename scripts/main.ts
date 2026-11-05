@@ -144,6 +144,20 @@ world.afterEvents.projectileHitEntity.subscribe((ev) => {
   }
 });
 
+// Cada baja de una unidad se anota, para saber qué las está matando.
+world.afterEvents.entityDie.subscribe(
+  (ev) => {
+    try {
+      const { damageSource: source, deadEntity } = ev;
+      const side = deadEntity.typeId === ENTITY_IDS.allySoldier || deadEntity.typeId === ENTITY_IDS.allyWizard ? "ally" : "invader";
+      manager?.onUnitDied(side, source.cause, source.damagingProjectile?.typeId ?? source.damagingEntity?.typeId);
+    } catch (e) {
+      console.warn(`[bastion] Error al anotar una baja: ${e}`);
+    }
+  },
+  { entityTypes: [ENTITY_IDS.allySoldier, ENTITY_IDS.allyWizard, ENTITY_IDS.invaderSoldier, ENTITY_IDS.invaderWizard] }
+);
+
 // Cada muerte de un jugador gasta una vida del equipo.
 world.afterEvents.entityDie.subscribe(
   () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { digPlan, hitsToBreak, isUnbreakable } from "../scripts/systems/digLogic";
+import { CasualtyLog } from "../scripts/systems/casualties";
+import { digPlan, GATE_WALL_HITS, hitsToBreak, isUnbreakable, nearBox } from "../scripts/systems/digLogic";
 import { reinforcementsDue } from "../scripts/systems/wavePlan";
 
 const heart = { x: -50, y: 124, z: -437 };
@@ -35,6 +36,27 @@ describe("digPlan", () => {
   });
 });
 
+describe("muro de la puerta", () => {
+  const wall = { from: { x: 32, y: 113, z: -417 }, to: { x: 44, y: 116, z: -415 } };
+  const objective = { x: 37.5, y: 114, z: -419.5 };
+
+  it("un soldado pegado al muro por fuera lo tiene delante", () => {
+    expect(digPlan({ x: 37.5, y: 113, z: -413.5 }, objective, 0.5)).toEqual([
+      { x: 37, y: 114, z: -415 },
+      { x: 37, y: 113, z: -415 },
+    ]);
+  });
+
+  it("solo cuenta como cerca quien está junto al muro", () => {
+    expect(nearBox({ x: 37.5, y: 113, z: -413.5 }, wall, 2.5)).toBe(true);
+    expect(nearBox({ x: 37.5, y: 113, z: -405 }, wall, 2.5)).toBe(false);
+  });
+
+  it("aguanta mucho más que una pared normal", () => {
+    expect(GATE_WALL_HITS).toBeGreaterThan(hitsToBreak("minecraft:stone") * 5);
+  });
+});
+
 describe("dureza de los bloques", () => {
   it("la madera cae de un golpe y la piedra de dos", () => {
     expect(hitsToBreak("minecraft:spruce_planks")).toBe(1);
@@ -46,6 +68,18 @@ describe("dureza de los bloques", () => {
       expect(isUnbreakable(id)).toBe(true);
     }
     expect(isUnbreakable("minecraft:cobblestone")).toBe(false);
+  });
+});
+
+describe("CasualtyLog", () => {
+  it("resume las bajas por bando y causa, de más a menos, y vacía la cuenta", () => {
+    const log = new CasualtyLog();
+    log.record("ally", "entityExplosion", "bastion:arcane_bolt");
+    log.record("ally", "entityAttack", "bastion:invader_soldier");
+    log.record("ally", "entityAttack", "bastion:invader_soldier");
+    log.record("invader", "fall");
+    expect(log.flush()).toBe("Bajas: aliados 3 (entityAttack/invader_soldier 2, entityExplosion/arcane_bolt 1); invasores 1 (fall 1)");
+    expect(log.flush()).toBeUndefined();
   });
 });
 

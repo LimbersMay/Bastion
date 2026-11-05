@@ -71,3 +71,15 @@ describe("validateMap: muros y meta", () => {
     expect(validateMap({ ...base, gates: [{ ...gate, walls: [huge] }] }).join()).toContain("demasiado grande");
   });
 });
+
+describe("proporción de piromanos", () => {
+  it("en ninguna oleada pasan de 1 de cada 10, redondeando hacia arriba", () => {
+    for (const map of MAPS) {
+      for (const wave of map.waves) {
+        const total = wave.groups.reduce((sum, g) => sum + g.count, 0);
+        const wizards = wave.groups.filter((g) => g.unit === "invader_wizard").reduce((sum, g) => sum + g.count, 0);
+        expect(wizards, `${map.id}, ${wave.name}`).toBeLessThanOrEqual(Math.ceil(total / 10));
+      }
+    }
+  });
+});

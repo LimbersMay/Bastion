@@ -63,8 +63,8 @@ export const combatCastle: MapDef = {
     {
       name: "Exploradores",
       groups: [
-        { unit: "invader_soldier", count: 6 },
-        { unit: "invader_wizard", count: 2 },
+        { unit: "invader_soldier", count: 7 },
+        { unit: "invader_wizard", count: 1 },
       ],
       batchSize: 3,
       batchIntervalTicks: 50,
@@ -72,8 +72,8 @@ export const combatCastle: MapDef = {
     {
       name: "Asalto",
       groups: [
-        { unit: "invader_soldier", count: 11 },
-        { unit: "invader_wizard", count: 3 },
+        { unit: "invader_soldier", count: 13 },
+        { unit: "invader_wizard", count: 1 },
       ],
       batchSize: 4,
       batchIntervalTicks: 60,
@@ -81,8 +81,8 @@ export const combatCastle: MapDef = {
     {
       name: "Gran ofensiva",
       groups: [
-        { unit: "invader_soldier", count: 17 },
-        { unit: "invader_wizard", count: 5 },
+        { unit: "invader_soldier", count: 20 },
+        { unit: "invader_wizard", count: 2 },
       ],
       batchSize: 5,
       batchIntervalTicks: 60,

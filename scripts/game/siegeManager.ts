@@ -2,6 +2,7 @@ import { GameMode, system, world, type Dimension, type Player } from "@minecraft
 import { LOGIC_INTERVAL_TICKS, TICKING_AREA_NAME, TICKS_PER_SECOND } from "../constants";
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
 import { aliveAllies, healAlly, unleashAllies } from "../systems/allies";
+import { CasualtyLog, type Side } from "../systems/casualties";
 import { describeGateTerrain, ensureHeart, findAimPoint, findObjective, gateTerrainMatches, invaderAtObjective, isAreaLoaded, moveAimPoint, spawnObjective } from "../systems/gate";
 import { giveLoadout } from "../systems/loadout";
 import { AllyOrders, ensureRallyPoints, type AllyOrder } from "../systems/orders";
@@ -20,6 +21,8 @@ const START_TIMEOUT_TICKS = 300;
 const AIM_MOVE_EVERY = 3;
 /** Evita que un mismo toque dé la orden dos veces. */
 const ORDER_COOLDOWN_TICKS = 10;
+/** Cada cuántas revisiones (segundos) se escribe en el log el resumen de bajas. */
+const CASUALTY_REPORT_EVERY = 30;
 
 /** Puntos de una puerta que deben estar en chunks cargados para tocar su muro y su meta. */
 function gatePoints(gate: GateDef): Vec3[] {
@@ -45,6 +48,8 @@ export class SiegeManager {
   private sappers: Sappers;
   private dimension: Dimension;
   private lastOrderTick = -ORDER_COOLDOWN_TICKS;
+  private readonly casualties = new CasualtyLog();
+  private casualtyClock = 0;
   /** Puertas ya abiertas en esta partida (cada una abre una sola vez). */
   private readonly opened = new Set<string>();
   /** Bloques de muro con los que empezó cada puerta (para el porcentaje del HUD). */
@@ -250,6 +255,11 @@ export class SiegeManager {
     console.log(`[bastion] Refuerzos: mínimo ${tuning.minField}, reserva ${tuning.reservePerWave}, tanda ${tuning.batch}.`);
   }
 
+  /** Lo llama main.ts cuando cae una unidad. */
+  onUnitDied(side: Side, cause: string, killerId?: string): void {
+    if (isActive(this.state.phase)) this.casualties.record(side, cause, killerId);
+  }
+
   /** Lo llama main.ts cuando muere un jugador. */
   onPlayerDied(): void {
     this.dispatch({ type: "playerDied" });
@@ -304,6 +314,11 @@ export class SiegeManager {
     }
     this.checkWaveCleared();
     this.drawHud();
+    if (++this.casualtyClock >= CASUALTY_REPORT_EVERY) {
+      this.casualtyClock = 0;
+      const report = this.casualties.flush();
+      if (report) console.log(`[bastion] ${report}`);
+    }
   }
 
   private sendReinforcements(): void {
@@ -322,7 +337,7 @@ export class SiegeManager {
     const broken = this.sappers.tick();
     if (broken === 0) return;
     console.log(`[bastion] Paredes: ${broken} bloques derribados.`);
-    if (first) world.sendMessage(S.wallsBreached);
+    if (first && this.sappers.breachedSomewhere) world.sendMessage(S.wallsBreached);
   }
 
   /** Levanta (o repone) los muros de todas las puertas y anota con cuántos bloques empieza cada una. */

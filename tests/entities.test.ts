@@ -133,10 +133,12 @@ describe("órdenes a los aliados", () => {
       }
     });
 
-    it(`${name}: al retirarse corre al punto de reunión y no busca enemigos`, () => {
-      const retreat = entity.component_groups["bastion:retreat"];
-      expect(JSON.stringify(retreat)).toContain(RALLY_TAG);
-      expect(JSON.stringify(retreat)).not.toContain(FAMILY.invader);
+    it(`${name}: al retirarse corre al punto de reunión y solo se defiende de quien tiene encima`, () => {
+      const [foes, rally] = entity.component_groups["bastion:retreat"]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types;
+      expect(JSON.stringify(foes)).toContain(FAMILY.invader);
+      expect(foes.max_dist).toBeLessThanOrEqual(6);
+      expect(foes.priority).toBeLessThan(rally.priority);
+      expect(JSON.stringify(rally)).toContain(RALLY_TAG);
     });
 
     it(`${name}: al salir busca invasores lejos y sin quedarse atado a su puesto`, () => {
@@ -154,6 +156,31 @@ describe("órdenes a los aliados", () => {
     const wizard = readEntity("ally_wizard");
     expect(wizard.component_groups["bastion:hold"]["minecraft:behavior.ranged_attack"].speed_multiplier).toBe(0);
     expect(wizard.component_groups["bastion:sortie"]["minecraft:behavior.ranged_attack"].speed_multiplier).toBeGreaterThan(0);
+  });
+});
+
+describe("ritmo de combate", () => {
+  const seconds = (attackerName: string, defenderName: string) => {
+    const attacker = readEntity(attackerName);
+    const defender = readEntity(defenderName);
+    const melee = Object.values<Record<string, { cooldown_time: number }>>(attacker.component_groups)
+      .map((g) => g["minecraft:behavior.melee_attack"])
+      .concat(attacker.components["minecraft:behavior.melee_attack"])
+      .find(Boolean);
+    return Math.ceil(defender.components["minecraft:health"].value / attacker.components["minecraft:attack"].damage) * (melee?.cooldown_time ?? 1);
+  };
+
+  it("un duelo entre soldados dura entre 15 y 30 segundos, sin ser un trámite ni eterno", () => {
+    for (const time of [seconds("ally_soldier", "invader_soldier"), seconds("invader_soldier", "ally_soldier")]) {
+      expect(time).toBeGreaterThanOrEqual(15);
+      expect(time).toBeLessThanOrEqual(30);
+    }
+  });
+
+  it("el soldado aliado aguanta algo más que el invasor, pero no el doble", () => {
+    const ratio = seconds("invader_soldier", "ally_soldier") / seconds("ally_soldier", "invader_soldier");
+    expect(ratio).toBeGreaterThan(1);
+    expect(ratio).toBeLessThan(2);
   });
 });
 

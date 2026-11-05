@@ -97,7 +97,8 @@ export const oldFallenCastle: MapDef = {
       { x: -46.5, y: 124, z: -441.5 },
       { x: -47.5, y: 124, z: -428.5 },
     ],
-    units: ["ally_soldier", "ally_soldier", "ally_soldier", "ally_wizard"],
+    // Uno de cada diez es pirómano, igual que en las oleadas enemigas.
+    units: ["ally_soldier", "ally_soldier", "ally_soldier", "ally_soldier", "ally_soldier", "ally_wizard", "ally_soldier", "ally_soldier", "ally_soldier", "ally_soldier"],
     minField: 6,
     reservePerWave: 12,
     batch: 2,
@@ -115,8 +116,8 @@ export const oldFallenCastle: MapDef = {
     {
       name: "Exploradores",
       groups: [
-        { unit: "invader_soldier", count: 6 },
-        { unit: "invader_wizard", count: 2 },
+        { unit: "invader_soldier", count: 7 },
+        { unit: "invader_wizard", count: 1 },
       ],
       batchSize: 3,
       batchIntervalTicks: 50,
@@ -124,8 +125,8 @@ export const oldFallenCastle: MapDef = {
     {
       name: "Asalto",
       groups: [
-        { unit: "invader_soldier", count: 11 },
-        { unit: "invader_wizard", count: 3 },
+        { unit: "invader_soldier", count: 13 },
+        { unit: "invader_wizard", count: 1 },
       ],
       batchSize: 4,
       batchIntervalTicks: 60,
@@ -133,8 +134,8 @@ export const oldFallenCastle: MapDef = {
     {
       name: "Gran ofensiva",
       groups: [
-        { unit: "invader_soldier", count: 17 },
-        { unit: "invader_wizard", count: 5 },
+        { unit: "invader_soldier", count: 20 },
+        { unit: "invader_wizard", count: 2 },
       ],
       batchSize: 5,
       batchIntervalTicks: 60,

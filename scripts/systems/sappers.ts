@@ -1,7 +1,7 @@
 import type { BlockPermutation, Dimension, Entity } from "@minecraft/server";
 import { ENTITY_IDS, FAMILY } from "../constants";
-import type { MapDef, Vec3 } from "../maps/types";
-import { digPlan, hitsToBreak, isUnbreakable } from "./digLogic";
+import type { GateDef, MapDef, Vec3 } from "../maps/types";
+import { digPlan, GATE_WALL_HITS, hitsToBreak, isUnbreakable, nearBox } from "./digLogic";
 import { isReturning } from "./returnPath";
 import { isFreeSpace } from "./spawnPoint";
 import { inBox } from "./wallLogic";
@@ -14,13 +14,16 @@ const STALL_DISTANCE = 1.2;
 const MAX_BITES_PER_TICK = 20;
 /** Quien tiene un enemigo a esta distancia está peleando, no atascado. */
 const FIGHT_DISTANCE = 3.5;
+/** A esta distancia de un muro de puerta, un soldado detenido se pone a golpearlo. */
+const GATE_WALL_REACH = 2.5;
 
 const keyOf = (p: Vec3) => `${p.x},${p.y},${p.z}`;
 
 /**
  * Soldados que derriban lo que les corta el paso cuando llevan un rato sin avanzar hacia el castillo.
- * Solo actúan dentro de `map.siege.zone`; el muro de la puerta sigue siendo cosa de los magos. Lo que derriban
- * se anota y vuelve a su sitio al reiniciar la partida.
+ * Las paredes y la roca solo dentro de `map.siege.zone`, y lo que derriban vuelve a su sitio al reiniciar.
+ * El muro de la puerta, en cualquier mapa y muy despacio: lo rompen los magos, pero sin esto una oleada
+ * sin magos vivos se quedaría empujándolo para siempre. Ese muro lo repone `raiseWalls`.
  */
 export class Sappers {
   private watched = new Map<string, { at: Vec3; still: number }>();
@@ -37,7 +40,6 @@ export class Sappers {
   /** Revisión periódica. Devuelve los bloques derribados en este pulso. */
   tick(): number {
     const siege = this.map.siege;
-    if (!siege) return 0;
     const seen = new Map<string, { at: Vec3; still: number }>();
     let budget = MAX_BITES_PER_TICK;
     let brokenNow = 0;
@@ -47,7 +49,8 @@ export class Sappers {
       const entry = this.track(unit);
       seen.set(unit.id, entry);
       if (entry.still < STALL_SECONDS || budget <= 0 || this.isFighting(unit)) continue;
-      const result = this.bite(unit.location, siege.heart, siege.zone);
+      const gate = this.map.gates.find((g) => g.walls.some((w) => nearBox(unit.location, w, GATE_WALL_REACH)));
+      const result = gate ? this.biteGateWall(unit.location, gate) : siege ? this.bite(unit.location, siege.heart, siege.zone) : "none";
       if (result === "none") continue;
       budget--;
       if (result === "broken") brokenNow++;
@@ -94,6 +97,28 @@ export class Sappers {
       block.setType("minecraft:air");
       this.dimension.playSound("mob.zombie.woodbreak", at, { volume: 0.8 });
       this.breachedSomewhere = true;
+      return "broken";
+    }
+    return "none";
+  }
+
+  /** Un golpe al muro de la puerta que tiene delante, si lo tiene. */
+  private biteGateWall(feet: Vec3, gate: GateDef): "none" | "hit" | "broken" {
+    for (const at of digPlan(feet, gate.objective, 0.5)) {
+      const block = this.dimension.getBlock(at);
+      if (!block || isFreeSpace(block)) continue;
+      if (!gate.walls.some((w) => inBox(at, w))) return "none";
+
+      const key = keyOf(at);
+      const hits = (this.hits.get(key) ?? 0) + 1;
+      if (hits < GATE_WALL_HITS) {
+        this.hits.set(key, hits);
+        this.dimension.playSound("mob.zombie.wood", at, { volume: 0.5 });
+        return "hit";
+      }
+      this.hits.delete(key);
+      block.setType("minecraft:air");
+      this.dimension.playSound("mob.zombie.woodbreak", at, { volume: 0.8 });
       return "broken";
     }
     return "none";

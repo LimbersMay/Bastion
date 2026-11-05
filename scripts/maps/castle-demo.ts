@@ -50,8 +50,8 @@ export const castleDemo: MapDef = {
 
   waves: [
     { name: "Exploradores", groups: [{ unit: "invader_soldier", count: 5 }], batchSize: 2, batchIntervalTicks: 60 },
-    { name: "Asalto", groups: [{ unit: "invader_soldier", count: 7 }, { unit: "invader_wizard", count: 2 }], batchSize: 3, batchIntervalTicks: 80 },
-    { name: "Gran ofensiva", groups: [{ unit: "invader_soldier", count: 10 }, { unit: "invader_wizard", count: 4 }], batchSize: 4, batchIntervalTicks: 80 },
+    { name: "Asalto", groups: [{ unit: "invader_soldier", count: 8 }, { unit: "invader_wizard", count: 1 }], batchSize: 3, batchIntervalTicks: 80 },
+    { name: "Gran ofensiva", groups: [{ unit: "invader_soldier", count: 13 }, { unit: "invader_wizard", count: 1 }], batchSize: 4, batchIntervalTicks: 80 },
   ],
 
   lives: 5,
