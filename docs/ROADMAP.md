@@ -7,12 +7,13 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-05. Versión de los packs: 0.1.20. Último commit: `32fe7a8`; los aliados inmunes al fuego, aún sin commit.*
+*Última actualización: 2026-11-05. Versión de los packs: 0.1.20. Último commit: el de la investigación de la IA.*
 
-- **Fase actual:** cierre de la Fase 1: ajuste del ritmo de combate.
-- **Último cambio:** los aliados ya no se queman; las explosiones sí les hacen daño.
-- **Siguiente paso:** decidir si la IA de las unidades se investiga aparte antes de la Fase 2, como recomendamos; la batalla de 200 se estancó porque las unidades se atoran y no cavan.
-- **Pendiente de decidir:** qué hacer con una unidad que de verdad se atore en el regreso (ver «Decisiones abiertas»).
+- **Fase actual:** investigación de la IA, antes de la Fase 2. Resultados en [IA.md](IA.md).
+- **Último cambio:** planificador de rutas probado en el servidor y peleas medidas; ninguna unidad real ha cambiado.
+- **Siguiente paso:** decidir el cambio de la Fase 3 y hacer los arreglos pequeños en las unidades actuales.
+- **Importante:** el laboratorio (`scripts/lab/` y `entities/lab_*.json`) sigue en la copia de trabajo, sin commit, y entra en el pack al compilar. Hay que quitarlo antes de una versión para jugar.
+- **Pendiente de decidir:** ver «Decisiones abiertas».
 
 ## Fases
 
@@ -76,13 +77,24 @@ Limitaciones conocidas:
 - Los soldados aliados no cruzan su propio muro: con la orden de ataque esperan en la cubierta hasta que cae.
 - En la retirada desde la cubierta, de 3 a 9 de cada 30 caen al lago por la cornisa y vuelven a pie.
 
-### Siguiente: análisis de comportamiento
+### En curso: investigación de la IA
 
-Un documento corto antes de la Fase 2, para que las fichas nazcan pensadas para esto.
+Documento: [IA.md](IA.md). Une el análisis de comportamiento y la investigación de movimiento.
 
-- Cada unidad: qué percibe, qué quiere, qué hace y cuándo cambia de idea.
-- El director de batalla: lo que afecta a muchos a la vez, como parejas, refuerzos, órdenes y ritmo.
-- Reunir ahí lo que hoy está repartido: regreso a pie, derribar paredes, órdenes y refuerzos.
+- [x] Qué se puede hacer: opciones oficiales y no oficiales.
+- [x] Cada unidad: qué percibe, qué quiere y cuándo cambia de idea.
+- [x] Medidas en el servidor: rutas, puertas, coste, rescate, `must_reach` y peleas.
+- [ ] Medidas en la tablet: coste y capacidad.
+- [ ] Rescate con el jugador encerrado de verdad.
+
+Arreglos pequeños propuestos antes de la Fase 2:
+
+- [ ] Abrir puertas en todas las unidades que caminan.
+- [ ] No contar como pelea a un enemigo detrás de un muro o en otro piso.
+- [ ] Atacar solo a quien se pueda alcanzar, con la meta como alternativa.
+- [ ] Quitar `behavior.break_door` y `can_break_doors`, que no hacen nada.
+- [ ] Repetir la batalla de referencia hasta el final y comparar.
+- [ ] Quitar el laboratorio del pack.
 
 ### Fase 2, unidades estándar
 
@@ -99,7 +111,7 @@ Una unidad se define con una ficha de datos, y un generador crea sus archivos de
 
 Para que no se pelee en bolita ni a toda velocidad.
 
-- Parejas de combate: 1 contra 1, o 1 contra 2 si no hay con quién emparejarse. Empezar con un experimento: no está probado que funcione bien en el juego.
+- Evitar la bolita. Las parejas con etiquetas se probaron y no la reducen; la propuesta es un director que reparta grupos por el frente (ver «Decisiones abiertas» e [IA.md](IA.md)).
 - Moral: un grupo superado se repliega de la muralla al patio y luego a la torre.
 - Rescate: si rodean al jugador, suena un cuerno y acuden los aliados más cercanos.
 
@@ -132,6 +144,7 @@ Para que no se pelee en bolita ni a toda velocidad.
 
 ## Decisiones abiertas
 
+- **Parejas o grupos repartidos.** Las parejas 1 contra 1 no redujeron la bolita, duplicaron el ritmo y bajaron el servidor a 4,7 ticks/s con 100 contra 100. Propuesta: sustituirlas por grupos con destinos distintos, aún sin probar.
 - **Unidad atorada en el regreso.** Si un invasor se atasca para siempre, la oleada no termina. Hoy no hay teletransporte, porque no se quiere. Opción: usarlo solo como último recurso tras varios minutos sin avanzar.
 - **Invasores que llegan al centro.** Sin aliados vivos, se quedan en el corazón del castillo y la oleada no termina. Se resuelve con la regla de derrota de la Fase 4.
 - **Aliados al otro lado del muro.** Quien cae regresa por el puente y queda fuera hasta que el muro se abre. Hoy pelea ahí.
