@@ -7,7 +7,7 @@ import { isReturning } from "./returnPath";
  * Órdenes del jugador a todos los aliados:
  * - `defend`: lo normal, cada uno en su puesto hasta la brecha.
  * - `retreat`: corren al punto de reunión del castillo sin pararse a pelear; al llegar, lo defienden.
- * - `sortie`: salen a buscar a los invasores que puedan alcanzar; si no hay ninguno, esperan junto a la puerta.
+ * - `sortie`: salen a buscar a los invasores que puedan alcanzar a 24 bloques o menos; si no hay ninguno, esperan junto a la puerta.
  */
 export type AllyOrder = "defend" | "retreat" | "sortie";
 

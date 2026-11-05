@@ -183,10 +183,10 @@ describe("órdenes a los aliados", () => {
       expect(JSON.stringify(rally)).toContain(RALLY_TAG);
     });
 
-    it(`${name}: al salir busca invasores lejos y sin quedarse atado a su puesto`, () => {
+    it(`${name}: al salir no se queda atado a su puesto y va a por los invasores cercanos`, () => {
       const sortie = entity.component_groups["bastion:sortie"];
       expect(sortie["minecraft:home"]).toBeUndefined();
-      expect(sortie["minecraft:behavior.nearest_attackable_target"].entity_types[0].max_dist).toBe(100);
+      expect(sortie["minecraft:behavior.nearest_attackable_target"].entity_types[0].max_dist).toBe(24);
     });
 
     it(`${name}: al salir no se queda pegado a una pared mirando a un enemigo inalcanzable`, () => {
@@ -265,4 +265,37 @@ describe("ally_soldier.json", () => {
     expect(near.must_reach).toBe(true);
     expect(near.entity_types[0].max_dist).toBeLessThan(fight["minecraft:behavior.nearest_attackable_target"].entity_types[0].max_dist);
   });
+});
+
+describe("coste de elegir enemigo en batallas grandes", () => {
+  const TARGETERS = ["minecraft:behavior.nearest_attackable_target", "minecraft:behavior.nearest_prioritized_attackable_target"];
+  const each = (node: unknown, fn: (n: Record<string, any>) => void): void => {
+    if (Array.isArray(node)) node.forEach((n) => each(n, fn));
+    else if (node && typeof node === "object") {
+      fn(node as Record<string, any>);
+      Object.values(node).forEach((v) => each(v, fn));
+    }
+  };
+
+  for (const name of ["ally_soldier", "ally_wizard", "invader_soldier", "invader_wizard"]) {
+    const entity = readEntity(name);
+
+    it(`${name}: solo comprueba si puede llegar a pie a enemigos a 24 bloques o menos (es lo más caro)`, () => {
+      each(entity, (n) => {
+        if (n.must_reach) for (const t of n.entity_types) expect(t.max_dist).toBeLessThanOrEqual(24);
+      });
+    });
+
+    it(`${name}: busca enemigo cada 2 s, no a cada momento`, () => {
+      let found = 0;
+      each(entity, (n) => {
+        for (const k of TARGETERS)
+          if (n[k]) {
+            found++;
+            expect(n[k].scan_interval).toBe(40);
+          }
+      });
+      expect(found).toBeGreaterThan(0);
+    });
+  }
 });

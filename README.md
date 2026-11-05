@@ -2,7 +2,7 @@
 
 Addon de **invasión y defensa** para Minecraft Bedrock. Un castillo, fortaleza o villa amurallada es asediado por oleadas de enemigos. Combates en primera persona junto a aliados con IA. No hay crafteo ni supervivencia: el equipo se entrega al empezar.
 
-Estado: **v0.1.23 (etapa 1 de los muros rompibles), probado en el servidor oficial (BDS)**; mapas: The Combat Castle y Old Fallen Castle (ver «Qué falta»).
+Estado: **v0.1.24 (etapa 1 de los muros rompibles), probado en el servidor oficial (BDS)**; mapas: The Combat Castle y Old Fallen Castle (ver «Qué falta»).
 
 ## Retomar el trabajo
 

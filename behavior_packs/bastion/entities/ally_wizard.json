@@ -29,7 +29,8 @@
               },
               "max_dist": 32
             }
-          ]
+          ],
+          "scan_interval": 40
         }
       },
       "bastion:fight": {
@@ -53,7 +54,8 @@
               },
               "max_dist": 40
             }
-          ]
+          ],
+          "scan_interval": 40
         }
       },
       "bastion:returning": {
@@ -144,7 +146,8 @@
               "max_dist": 200,
               "priority": 1
             }
-          ]
+          ],
+          "scan_interval": 40
         },
         "minecraft:behavior.melee_attack": {
           "priority": 2,
@@ -185,7 +188,8 @@
               },
               "max_dist": 32
             }
-          ]
+          ],
+          "scan_interval": 40
         }
       },
       "bastion:retreat": {
@@ -213,7 +217,8 @@
               "max_dist": 200,
               "priority": 1
             }
-          ]
+          ],
+          "scan_interval": 40
         },
         "minecraft:behavior.melee_attack": {
           "priority": 2,
@@ -260,10 +265,11 @@
                   }
                 ]
               },
-              "max_dist": 100
+              "max_dist": 24
             }
           ],
-          "must_reach": true
+          "must_reach": true,
+          "scan_interval": 40
         },
         "minecraft:behavior.nearest_prioritized_attackable_target": {
           "priority": 4,
@@ -299,7 +305,8 @@
               "max_dist": 40,
               "priority": 0
             }
-          ]
+          ],
+          "scan_interval": 40
         }
       }
     },

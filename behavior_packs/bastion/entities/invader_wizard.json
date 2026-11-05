@@ -22,7 +22,8 @@
               },
               "max_dist": 80
             }
-          ]
+          ],
+          "scan_interval": 40
         },
         "minecraft:behavior.ranged_attack": {
           "priority": 2,
@@ -73,7 +74,8 @@
               },
               "max_dist": 256
             }
-          ]
+          ],
+          "scan_interval": 40
         },
         "minecraft:behavior.ranged_attack": {
           "priority": 2,
@@ -179,7 +181,8 @@
               "max_dist": 200,
               "priority": 1
             }
-          ]
+          ],
+          "scan_interval": 40
         },
         "minecraft:behavior.melee_attack": {
           "priority": 2,

@@ -7,14 +7,16 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-05. Versión de los packs: 0.1.23. Rama: `feature/old-fallen-castle`, sin subir. Último commit: el de la caza; el ajuste de ritmo, aún sin commit.*
+*Última actualización: 2026-11-05. Versión de los packs: 0.1.24. Rama: `feature/old-fallen-castle`, sin subir. Último commit: el del aligerado.*
 
 - **Fase actual:** investigación de la IA, cerrada. Resultados en [IA.md](IA.md); empieza por «Conclusiones» y «Batalla real».
 - **Último cambio:** la caza. Sin meta central, los invasores van a por el enemigo vivo más cercano y se abren camino con una ruta calculada.
 - **Resultado:** la batalla de referencia ya no se estancó: mataron a todos los aliados y derrotaron al jugador hacia el minuto 8, con 126 bloques derribados. Es una sola batalla.
 - **Confirmado por Limbers (2026-11-05):** «se sintió bastante mejor»; rompieron el castillo por un lado e invadieron. Pidió las peleas un poco más frenéticas.
-- **Ajuste de ritmo (v0.1.23), sin probar en juego:** golpes cada 1,5 s en lugar de 1,75, y soldados un 12 % más rápidos. Duelos de 15 a 22,5 s.
-- **Siguiente paso:** Limbers prueba el ritmo cuando quiera, y empezar la Fase 2, unidades estándar. Limbers la retoma en otra sesión.
+- **Ajuste de ritmo (v0.1.23), aprobado por Limbers:** golpes cada 1,5 s en lugar de 1,75, y soldados un 12 % más rápidos. Duelos de 15 a 22,5 s.
+- **Aligerado (v0.1.24), sin probar en juego:** Limbers pidió batallas de 300 a 400 por bando y con 400 unidades el servidor iba a 4 ticks/s. Lo más caro era comprobar si se puede llegar a pie a cada enemigo. Ahora solo se comprueba hasta 24 bloques (lo lejano lo resuelve la caza) y se busca enemigo cada 2 s. Con unas 400 unidades pasa de 4,0–4,6 a 7,2–7,7 ticks/s. El asedio de referencia acaba igual. Detalle en [IA.md](IA.md), «Coste en batallas grandes».
+- **Batallas de 400 por bando:** ni con el aligerado caben todas a la vez. Hace falta el tope en el campo con reservas (Fase 4).
+- **Siguiente paso:** empezar la Fase 2, unidades estándar. Limbers la retoma en otra sesión.
 - **Vigilar:** el 73 % de las búsquedas de ruta agotan su límite. La tablet jugó conectada al servidor de la PC, así que falta medir las búsquedas con la partida corriendo dentro de la tablet.
 - **Pendiente de decidir:** ver «Decisiones abiertas».
 
@@ -70,6 +72,8 @@ Capacidad medida en el servidor (PC), con 20 ticks/s como velocidad normal:
 | unas 275 | 15 |
 | unas 320 a 350 | 12 |
 | unas 390 | de 15 a 11, con bajones a 9 |
+
+Esa tabla es anterior a `must_reach` en los invasores (v0.1.21). Con la v0.1.23, unas 390 unidades iban a 4 ticks/s; con el aligerado (v0.1.24), a unos 7,5. Se mide con `tools/lab/cost.mjs`.
 
 Primera referencia para el tope: unas 220 unidades. Con unas 130 la tablet no se trabó; con más, aún no hay respuesta.
 
@@ -127,7 +131,7 @@ Para que no se pelee en bolita ni a toda velocidad.
 
 ### Fase 4, guerra progresiva
 
-- Mismo tope de unidades en el campo para cada bando, y una reserva que entra por grupos conforme caen.
+- Mismo tope de unidades en el campo para cada bando, y una reserva que entra por grupos conforme caen. Es lo que permitiría batallas de 400 por bando: con unas 400 a la vez el servidor ya va a 7,5 ticks/s.
 - Ritmo por etapas: escaramuzas, choque fuerte, respiro y nuevo empuje.
 - Regla de derrota: perder también cuando no quedan aliados ni reservas.
 - Cada oleada tiene un presupuesto de puntos que se gasta en unidades, según su coste.
@@ -168,6 +172,7 @@ Para que no se pelee en bolita ni a toda velocidad.
 - **La escalera se queda:** cruzar por encima de un muro escalonado es una mecánica válida.
 - **Peleas en el agua:** solo se apunta a quien nada si uno también está en el agua; así nadie se queda mirando el lago desde el puente.
 - **El servidor de prueba se reinicia sin preguntar.**
+- **Comprobar el camino solo de cerca:** `must_reach` solo hasta 24 bloques y búsqueda de enemigo cada 2 s, porque era lo que más pesaba en batallas grandes. Elegido por Limbers entre tres opciones (2026-11-05).
 - **Ritmo de las peleas:** ni tan frenético como al principio ni lento; un duelo entre soldados dura unos 15 a 30 segundos. Tras probar la caza, Limbers lo pidió un poco más rápido (v0.1.23: 15 a 22,5 s).
 - **Aliados inmunes al fuego:** causaba cerca de dos tercios de sus bajas y los invasores ya eran inmunes. La explosión sí les hace daño.
 - **Piromanos escasos:** unos 8 a 10 de cada 80 unidades, porque hacen mucho daño y destrozan el mapa.

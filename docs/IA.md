@@ -119,7 +119,29 @@ Se cerró una sala de piedra en el patio y 6 unidades fueron hasta su interior: 
 
 ### Exigir camino (`must_reach`)
 
-Con 280 unidades (240 invasores que no pueden llegar y 40 aliados): 20,0 ticks/s con y sin `must_reach`. No se ve coste, pero 20 es el máximo posible y no había combate, así que no demuestra que sea gratis.
+Con 280 unidades (240 invasores que no pueden llegar y 40 aliados): 20,0 ticks/s con y sin `must_reach`. No se ve coste, pero 20 es el máximo posible y no había combate, así que no demuestra que sea gratis. En plena batalla sí cuesta, y mucho: ver la sección siguiente.
+
+### Coste en batallas grandes (v0.1.24)
+
+Batalla de unos 200 contra 200 con `tools/lab/cost.mjs` (unas 390 unidades, sin jugador), cambiando una sola cosa cada vez. Una partida por versión.
+
+| Versión | Ticks/s, 1.er minuto | Ticks/s, 2.º minuto | Unidades al final |
+|---|---|---|---|
+| v0.1.23 | 4,6 | 4,0 | 388 |
+| Alcance de la marcha a 100 en vez de 256 | 3,8 | 4,0 | 387 |
+| Sin gestos de adorno | 4,2 | 4,4 | 399 |
+| Sin scripts del pack | 7,4 | 9,5 | 343 |
+| Buscar enemigo cada 2 s (`scan_interval` 40) | 5,8 | 7,2 | 355 |
+| `must_reach` solo hasta 24 bloques | 6,3 | 7,2 | 361 |
+| Las dos cosas | 8,4 | 10,4 | 320 |
+| Sin `must_reach` | 12,9 | 14,3 | 270 |
+| **v0.1.24 (las dos cosas, en el pack)** | **7,7** | **7,2** | **394** |
+
+- **Lo más caro es `must_reach`.** Cada unidad calcula si puede llegar a pie a cada enemigo posible, y con cientos de unidades eso crece mucho más rápido que su número. Explica la caída frente a la tabla de capacidad anterior a la v0.1.21.
+- **Quitarlo del todo** devolvería la bola pegada al muro mirando a alguien inalcanzable. Por eso se queda hasta 24 bloques; lo lejano lo resuelve la caza, con una búsqueda a la vez compartida por hasta 12 soldados.
+- **Las cifras con menos unidades al final están infladas:** murieron más durante la medición y quedaba menos carga. La comparación justa es la de la v0.1.24, con casi las mismas unidades que la v0.1.23: de unos 4,3 a unos 7,5 ticks/s.
+- **Asedio de referencia con la v0.1.24, sin jugador:** acaba igual que con la caza. Todos los aliados caen hacia el minuto 5,5, 121 bloques derribados (antes 126) y 26 invasores en pie. De 130 búsquedas de ruta, 44 no llegaron hasta la presa (antes 126 de 172).
+- **Para 400 por bando** no basta: hace falta el tope en el campo con reservas (Fase 4). Los grupos de la Fase 3 también ayudarían, porque comprobaría el camino el grupo y no cada unidad.
 
 ### Peleas: quién golpea y quién se amontona
 
@@ -173,7 +195,7 @@ Igual que el soldado, pero dispara y exige ver al objetivo. No se mueve hacia é
 
 | Estado | Percibe | Quiere | Cambia de idea cuando |
 |---|---|---|---|
-| Marcha | Enemigos alcanzables a 100; si no hay, la meta a 100 | Llegar al corazón del castillo | Cae al agua |
+| Marcha | Enemigos alcanzables a 24 (cada 2 s); si no hay, el rastro de la caza o el enemigo vivo más cercano | Acabar con los vivos | Cae al agua |
 | Regreso | Enemigos a 12; hitos de la ruta | Volver a pie | Termina la ruta |
 
 Además, el script `sappers.ts` lo pone a cavar si avanza menos de 1,2 bloques en 3 s.
@@ -277,7 +299,8 @@ El planificador de rutas no depende del mapa: solo lee bloques. Lo propio de cad
 | Ver una batalla con los arreglos | Limbers | Que se sienta orgánico solo se puede juzgar mirándolo |
 | Peleas en campo abierto, con grupos y empuje | Servidor | Es la solución que propongo y sigue sin medir |
 | Coste separado: filtros o script de parejas | Servidor | Solo si se quiere retomar la idea de parejas |
-| `must_reach` y rutas repartidas en plena batalla | Servidor | Hasta ahora, sin combate |
+| Rutas repartidas en plena batalla | Servidor | `must_reach` ya se midió en batalla; las rutas, no |
+| Batalla grande con la partida corriendo en la tablet | Limbers | Con unas 400 unidades la PC va a 7,5 ticks/s; la tablet, sin medir |
 | Causa de los 4 rezagados de la ladera oeste | Servidor | Puede ser un fallo del planificador |
 
 ## Código de esta investigación

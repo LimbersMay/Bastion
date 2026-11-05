@@ -55,7 +55,8 @@
               "max_dist": 16
             }
           ],
-          "must_reach": true
+          "must_reach": true,
+          "scan_interval": 40
         }
       },
       "bastion:fight": {
@@ -87,10 +88,11 @@
                 "subject": "other",
                 "value": "bastion_invader"
               },
-              "max_dist": 40
+              "max_dist": 24
             }
           ],
-          "must_reach": true
+          "must_reach": true,
+          "scan_interval": 40
         },
         "minecraft:home": {
           "restriction_type": "random_movement",
@@ -189,7 +191,8 @@
               "max_dist": 200,
               "priority": 1
             }
-          ]
+          ],
+          "scan_interval": 40
         },
         "minecraft:behavior.melee_attack": {
           "priority": 2,
@@ -248,7 +251,8 @@
               "max_dist": 16
             }
           ],
-          "must_reach": true
+          "must_reach": true,
+          "scan_interval": 40
         }
       },
       "bastion:retreat": {
@@ -276,7 +280,8 @@
               "max_dist": 200,
               "priority": 1
             }
-          ]
+          ],
+          "scan_interval": 40
         },
         "minecraft:behavior.melee_attack": {
           "priority": 2,
@@ -333,10 +338,11 @@
                   }
                 ]
               },
-              "max_dist": 100
+              "max_dist": 24
             }
           ],
-          "must_reach": true
+          "must_reach": true,
+          "scan_interval": 40
         },
         "minecraft:behavior.nearest_prioritized_attackable_target": {
           "priority": 4,
@@ -353,7 +359,8 @@
               "max_dist": 200,
               "priority": 0
             }
-          ]
+          ],
+          "scan_interval": 40
         }
       }
     },

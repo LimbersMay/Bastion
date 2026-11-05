@@ -30,6 +30,22 @@ No necesita el laboratorio activado: usa las unidades reales del pack.
 
 Enfrenta a 30 aliados y 60 soldados invasores, sin piromanos, durante 9 minutos. Cada 30 s anota vivos, bloques derribados y ticks/s; al final, dónde quedó cada unidad. El resultado queda en `tools/lab/siege-<etiqueta>.log`. Vuelve a `setup` antes de repetirla para restaurar el mundo.
 
+## Coste de una batalla grande
+
+`node tools/lab/cost.mjs <carpeta-del-mundo> [variante ...]`, con el servidor parado y tras `npm run mcaddon`. Arranca y para el servidor por su cuenta.
+
+Unos 200 contra 200 por todos los frentes, con la orden de salida. Mide dos minutos de ticks/s y cuenta las unidades. Cada variante cambia una sola cosa, y solo en la copia de los packs del servidor:
+
+| Variante | Qué cambia |
+|---|---|
+| `actual` | Nada |
+| `sinExigirCamino` | Quita `must_reach` |
+| `escaneoRapido` | Quita `scan_interval`: buscan enemigo a cada momento |
+| `sinAdornos` | Quita mirar al jugador y mirar alrededor |
+| `sinScripts` | Quita los scripts del pack |
+
+Sin variantes, las mide todas (unos 4 minutos cada una). El resultado queda en `tools/lab/cost.log`. Resultados en [docs/IA.md](../../docs/IA.md), «Coste en batallas grandes».
+
 ## Órdenes
 
 Todas son `/scriptevent bastion:lab ...`:
