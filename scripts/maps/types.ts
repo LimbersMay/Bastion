@@ -8,6 +8,33 @@ export interface Vec3 {
   readonly z: number;
 }
 
+export interface TickingAreaDef {
+  readonly center: Vec3;
+  readonly radiusChunks: number;
+}
+
+/**
+ * Aliados de refuerzo durante la oleada: cuando quedan menos de `minField` en el campo, cada
+ * `everySeconds` salen hasta `batch` unidades de una reserva de `reservePerWave`.
+ */
+export interface ReinforcementsDef {
+  readonly spawns: readonly Vec3[];
+  /** Unidades que salen, en rotación. */
+  readonly units: readonly UnitId[];
+  readonly minField: number;
+  readonly reservePerWave: number;
+  readonly batch: number;
+  readonly everySeconds: number;
+}
+
+/** Asalto al castillo por donde no hay camino: a dónde quieren llegar los invasores y dónde pueden derribar. */
+export interface SiegeDef {
+  /** Centro del castillo: un marcador invisible al que van los invasores cuando no tienen a nadie más cerca. */
+  readonly heart: Vec3;
+  /** Caja de bloques (esquinas inclusivas) en la que los soldados atascados pueden derribar lo que les estorba. */
+  readonly zone: { readonly from: Vec3; readonly to: Vec3 };
+}
+
 export interface UnitSpawn {
   readonly unit: UnitId;
   readonly position: Vec3;
@@ -19,34 +46,48 @@ export interface BreachTroops {
 }
 
 /**
- * Región de bloques que cierra el paso (compuerta, barricada). Se rellena con `block` al empezar
- * y se vacía al caer la puerta. Esquinas inclusivas; `block` es lo que va tras `fill`
- * (ej. `spruce_planks` o `planks ["wood_type"="spruce"]`).
+ * Tramo de muro: una caja de bloques (esquinas inclusivas) hecha de un material. Se coloca al empezar
+ * (solo sobre aire: el terreno que ya hay se respeta) y los proyectiles de los magos se lo van comiendo
+ * bloque a bloque. Solo se pueden romper los bloques de ese material, no el terreno.
+ * `block` es un id de bloque sin estados (ej. `dark_oak_planks`, `stone_bricks`).
+ *
+ * El GROSOR del muro es su lado horizontal más corto: el hueco se abre cuando alguna columna de 2 de
+ * alto queda libre a lo largo de todo ese grosor. Más grosor = más proyectiles para abrirlo.
  */
-export interface BarrierDef {
+export interface WallDef {
   readonly from: Vec3;
   readonly to: Vec3;
   readonly block: string;
 }
 
-/** Una puerta atacable y lo que ocurre cuando cae. */
+/** Un punto de entrada al castillo: un muro que romper y lo que ocurre cuando se abre. */
 export interface GateDef {
   /** Identificador único dentro del mapa (minúsculas, números, _ y -). */
   readonly id: string;
 
   /**
-   * Dónde aparece la entidad `bastion:gate_core`. Debe estar en un sitio ALCANZABLE por los
-   * invasores desde fuera, no en un hueco cerrado: es lo que atacan.
+   * Punto de referencia FUERA del muro, a nivel del suelo y sobre terreno firme. Sirve para
+   * comprobar que el mundo cargado es el del mapa y que la zona está cargada antes de empezar.
    */
   readonly position: Vec3;
 
-  /** Vida de la puerta. Debe ser uno de `GATE_HEALTH_TIERS` (150, 300, 600, 1200, 2400). Por defecto 300. */
-  readonly health?: number;
+  /**
+   * Meta de los invasores: un marcador invisible justo DETRÁS del muro (en el interior). Es lo
+   * que atacan cuando no ven a nadie, así que llegan al muro y, si no pueden pasar, esperan
+   * a que los magos lo abran.
+   */
+  readonly objective: Vec3;
 
-  /** Bloques que cierran el paso y desaparecen cuando esta puerta cae. Opcional. */
-  readonly barriers?: readonly BarrierDef[];
+  /** Los muros que cierran este acceso (uno o varios tramos; pueden ir en capas). */
+  readonly walls: readonly WallDef[];
 
-  /** Puntos INTERIORES donde aparecen las tropas cuando cae esta puerta. */
+  /**
+   * Cajas de bloques invisibles (`barrier`, solo sobre aire) que cierran caminos que el terreno deja abiertos.
+   * Por ejemplo, pretiles por los que los defensores podrían subirse al muro y caer por el otro lado.
+   */
+  readonly blockers?: readonly { readonly from: Vec3; readonly to: Vec3 }[];
+
+  /** Puntos INTERIORES donde aparecen las tropas cuando se abre esta puerta. */
   readonly breachSpawns: readonly Vec3[];
   readonly breachTroops: readonly BreachTroops[];
 }
@@ -63,8 +104,8 @@ export interface MapDef {
   readonly dimension: DimensionName;
 
   /**
-   * Las puertas del mapa (una o varias). Cada una es una entidad atacable con su propia barra de
-   * vida, sus barricadas y sus tropas de brecha. La brecha del asedio salta cuando cae la primera.
+   * Los accesos del mapa (uno o varios). Cada uno tiene su muro, su meta y sus tropas de brecha.
+   * La brecha del asedio salta cuando se abre el primero.
    */
   readonly gates: readonly GateDef[];
 
@@ -74,8 +115,27 @@ export interface MapDef {
   /** Aliados que se colocan al empezar. */
   readonly allies: readonly UnitSpawn[];
 
-  /** Puntos EXTERIORES por donde entran las oleadas. Mantenlos a menos de ~70 bloques de la puerta. */
+  /** Puntos EXTERIORES por donde entran las oleadas. Mantenlos a menos de ~70 bloques del acceso. */
   readonly invaderSpawns: readonly Vec3[];
+
+  /** Otros frentes: uno de cada tres soldados de la oleada sale por aquí y se abre paso derribando. Requiere `siege`. */
+  readonly flankSpawns?: readonly Vec3[];
+
+  readonly siege?: SiegeDef;
+
+  /** Puntos a los que corren los aliados con la orden de retirada. */
+  readonly rallyPoints?: readonly Vec3[];
+
+  /** Con la orden de ataque, a donde marchan los soldados si no pueden alcanzar a ningún enemigo: junto a la puerta, por dentro. */
+  readonly sortiePoint?: Vec3;
+
+  readonly reinforcements?: ReinforcementsDef;
+
+  /**
+   * Ruta a pie de quien cae al agua: hitos en orden (máximo 4, a unos 40 bloques entre sí) que acaban
+   * en el camino normal de los invasores. Se llega andando, nunca por teletransporte. Sin ruta, se quedan donde caen.
+   */
+  readonly returnPath?: readonly Vec3[];
 
   readonly waves: readonly WaveDef[];
 
@@ -85,5 +145,7 @@ export interface MapDef {
   readonly intermissionSeconds: number;
 
   /** Área que se mantiene cargada aunque estés lejos (radio en chunks, 1 a 4). */
-  readonly tickingArea?: { readonly center: Vec3; readonly radiusChunks: number };
+  readonly tickingArea?: TickingAreaDef;
+  /** Más áreas cargadas, si el campo de batalla no cabe en una sola. */
+  readonly extraTickingAreas?: readonly TickingAreaDef[];
 }

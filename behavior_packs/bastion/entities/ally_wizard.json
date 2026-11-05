@@ -1,0 +1,494 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "bastion:ally_wizard",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "component_groups": {
+      "bastion:patrol": {
+        "minecraft:behavior.ranged_attack": {
+          "priority": 2,
+          "speed_multiplier": 0.0,
+          "attack_interval_min": 2,
+          "attack_interval_max": 3,
+          "attack_radius": 32
+        },
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 3,
+          "must_see": true,
+          "reselect_targets": true,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "bastion_invader"
+              },
+              "max_dist": 32
+            }
+          ]
+        }
+      },
+      "bastion:fight": {
+        "minecraft:behavior.ranged_attack": {
+          "priority": 2,
+          "speed_multiplier": 0.0,
+          "attack_interval_min": 2,
+          "attack_interval_max": 3,
+          "attack_radius": 40
+        },
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 3,
+          "must_see": true,
+          "reselect_targets": true,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "bastion_invader"
+              },
+              "max_dist": 40
+            }
+          ]
+        }
+      },
+      "bastion:returning": {
+        "minecraft:behavior.nearest_prioritized_attackable_target": {
+          "priority": 2,
+          "must_see": false,
+          "reselect_targets": true,
+          "persist_time": 0,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "bastion_invader"
+              },
+              "max_dist": 12,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_0"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_1"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_2"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_3"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            }
+          ]
+        },
+        "minecraft:behavior.melee_attack": {
+          "priority": 2,
+          "speed_multiplier": 1.3,
+          "track_target": true
+        },
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 1,
+          "entity_types": {
+            "filters": {
+              "test": "is_family",
+              "subject": "other",
+              "value": "bastion_invader"
+            },
+            "max_dist": 48
+          }
+        }
+      },
+      "bastion:hold": {
+        "minecraft:behavior.ranged_attack": {
+          "priority": 2,
+          "speed_multiplier": 0.0,
+          "attack_interval_min": 2,
+          "attack_interval_max": 3,
+          "attack_radius": 32
+        },
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 3,
+          "must_see": true,
+          "reselect_targets": true,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "bastion_invader"
+              },
+              "max_dist": 32
+            }
+          ]
+        }
+      },
+      "bastion:retreat": {
+        "minecraft:behavior.nearest_prioritized_attackable_target": {
+          "priority": 2,
+          "must_see": false,
+          "reselect_targets": true,
+          "persist_time": 0,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "has_tag",
+                "subject": "other",
+                "value": "bastion_rally"
+              },
+              "max_dist": 200,
+              "priority": 0
+            }
+          ]
+        },
+        "minecraft:behavior.melee_attack": {
+          "priority": 2,
+          "speed_multiplier": 1.5,
+          "track_target": true
+        }
+      },
+      "bastion:sortie": {
+        "minecraft:behavior.ranged_attack": {
+          "priority": 2,
+          "speed_multiplier": 1.0,
+          "attack_interval_min": 2,
+          "attack_interval_max": 3,
+          "attack_radius": 20
+        },
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 3,
+          "must_see": false,
+          "reselect_targets": true,
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "any_of": [
+                      {
+                        "test": "in_water",
+                        "subject": "other",
+                        "operator": "!=",
+                        "value": true
+                      },
+                      {
+                        "test": "in_water",
+                        "subject": "self",
+                        "value": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              "max_dist": 100
+            }
+          ],
+          "must_reach": true
+        },
+        "minecraft:behavior.nearest_prioritized_attackable_target": {
+          "priority": 4,
+          "must_see": true,
+          "reselect_targets": true,
+          "persist_time": 0,
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "any_of": [
+                      {
+                        "test": "in_water",
+                        "subject": "other",
+                        "operator": "!=",
+                        "value": true
+                      },
+                      {
+                        "test": "in_water",
+                        "subject": "self",
+                        "value": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              "max_dist": 40,
+              "priority": 0
+            }
+          ]
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "bastion_ally",
+          "bastion_unit"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 0.6,
+        "height": 1.9
+      },
+      "minecraft:health": {
+        "value": 24,
+        "max": 24
+      },
+      "minecraft:movement": {
+        "value": 0.3
+      },
+      "minecraft:navigation.walk": {
+        "can_path_over_water": true,
+        "can_pass_doors": true,
+        "can_open_doors": true,
+        "avoid_water": true
+      },
+      "minecraft:movement.basic": {},
+      "minecraft:jump.static": {},
+      "minecraft:can_climb": {},
+      "minecraft:follow_range": {
+        "value": 100,
+        "max": 100
+      },
+      "minecraft:persistent": {},
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:shooter": {
+        "def": "bastion:ally_bolt"
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "on_damage": {
+              "filters": {
+                "any_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "player"
+                  },
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_ally"
+                  },
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_ally_bolt"
+                  }
+                ]
+              }
+            },
+            "deals_damage": "no"
+          }
+        ]
+      },
+      "minecraft:behavior.float": {
+        "priority": 0
+      },
+      "minecraft:behavior.hurt_by_target": {
+        "priority": 1,
+        "entity_types": {
+          "filters": {
+            "test": "is_family",
+            "subject": "other",
+            "value": "bastion_invader"
+          },
+          "max_dist": 48
+        }
+      },
+      "minecraft:behavior.look_at_player": {
+        "priority": 7,
+        "look_distance": 8
+      },
+      "minecraft:behavior.random_look_around": {
+        "priority": 8
+      },
+      "minecraft:attack": {
+        "damage": 2
+      }
+    },
+    "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "bastion:patrol"
+          ]
+        }
+      },
+      "bastion:fight": {
+        "remove": {
+          "component_groups": [
+            "bastion:patrol",
+            "bastion:returning",
+            "bastion:hold",
+            "bastion:retreat",
+            "bastion:sortie"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "bastion:fight"
+          ]
+        }
+      },
+      "bastion:patrol": {
+        "remove": {
+          "component_groups": [
+            "bastion:fight",
+            "bastion:returning",
+            "bastion:hold",
+            "bastion:retreat",
+            "bastion:sortie"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "bastion:patrol"
+          ]
+        }
+      },
+      "bastion:return": {
+        "remove": {
+          "component_groups": [
+            "bastion:patrol",
+            "bastion:fight",
+            "bastion:hold",
+            "bastion:retreat",
+            "bastion:sortie"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "bastion:returning"
+          ]
+        }
+      },
+      "bastion:hold": {
+        "remove": {
+          "component_groups": [
+            "bastion:patrol",
+            "bastion:fight",
+            "bastion:returning",
+            "bastion:retreat",
+            "bastion:sortie"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "bastion:hold"
+          ]
+        }
+      },
+      "bastion:retreat": {
+        "remove": {
+          "component_groups": [
+            "bastion:patrol",
+            "bastion:fight",
+            "bastion:returning",
+            "bastion:hold",
+            "bastion:sortie"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "bastion:retreat"
+          ]
+        }
+      },
+      "bastion:sortie": {
+        "remove": {
+          "component_groups": [
+            "bastion:patrol",
+            "bastion:fight",
+            "bastion:returning",
+            "bastion:hold",
+            "bastion:retreat"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "bastion:sortie"
+          ]
+        }
+      }
+    }
+  }
+}

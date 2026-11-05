@@ -59,13 +59,16 @@ export function findSafeSpawn(dimension: Dimension, position: Vec3, jitter: numb
   return undefined;
 }
 
-/** ¿Está la entidad con los pies o la cabeza dentro de un bloque sólido? */
+/**
+ * ¿Está la entidad con los pies Y la cabeza dentro de bloques sólidos? Basta con uno para dar falsos
+ * positivos: quien sube una escalera o cruza una puerta tiene ese bloque a la altura de los pies.
+ */
 export function isEmbedded(dimension: Dimension, at: Vec3): boolean {
   try {
     const feet = dimension.getBlock({ x: at.x, y: at.y + 0.6, z: at.z });
     const head = dimension.getBlock({ x: at.x, y: at.y + 1.5, z: at.z });
     if (!feet || !head) return false; // sin cargar: no se puede saber
-    return !isFreeSpace(feet) || !isFreeSpace(head);
+    return !isFreeSpace(feet) && !isFreeSpace(head);
   } catch {
     return false;
   }

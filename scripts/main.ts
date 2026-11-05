@@ -1,5 +1,5 @@
 import { Player, system, world } from "@minecraft/server";
-import { MENU_ITEM_ID, NAMESPACE, PROP_ACTIVE_MAP } from "./constants";
+import { ENTITY_IDS, MENU_ITEM_ID, NAMESPACE, PROP_ACTIVE_MAP, RETREAT_ITEM_ID, SORTIE_ITEM_ID } from "./constants";
 import { SiegeManager } from "./game/siegeManager";
 import { defaultMap, findMap, MAPS } from "./maps";
 import { validateMap } from "./maps/validate";
@@ -71,6 +71,16 @@ function handleScriptEvent(id: string, message: string, source: Player | undefin
     case "map":
       changeMap(message.trim(), source);
       break;
+    case "order":
+      if (message.trim() === "retreat" || message.trim() === "sortie") manager.orderAllies(message.trim() as "retreat" | "sortie", source);
+      else source?.sendMessage(S.scriptHelp);
+      break;
+    case "reserve": {
+      const [minField, reservePerWave, batch] = message.trim().split(/\s+/).map(Number);
+      if ([minField, reservePerWave, batch].every((n) => Number.isInteger(n) && n >= 0)) manager.tuneReinforcements({ minField, reservePerWave, batch });
+      else source?.sendMessage(S.scriptHelp);
+      break;
+    }
     case "pos":
       if (source) {
         const { x, y, z } = source.location;
@@ -92,6 +102,7 @@ world.afterEvents.playerSpawn.subscribe((ev) => {
   const m = ensureManager(ev.player);
   if (m) ev.player.sendMessage(S.loaded(m.currentMap.name));
   if (!hasMenuItem(ev.player)) giveMenuItem(ev.player);
+  m?.onPlayerJoined(ev.player);
 });
 
 system.afterEvents.scriptEventReceive.subscribe((ev) => {
@@ -100,12 +111,37 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
   handleScriptEvent(ev.id, ev.message, source);
 });
 
-// El reloj del equipo inicial abre el menú.
+// El reloj del equipo inicial abre el menú; la pluma y la vara dan órdenes a los aliados.
 world.afterEvents.itemUse.subscribe((ev) => {
-  if (ev.itemStack.typeId !== MENU_ITEM_ID) return;
+  const { typeId } = ev.itemStack;
+  if (typeId !== MENU_ITEM_ID && typeId !== RETREAT_ITEM_ID && typeId !== SORTIE_ITEM_ID) return;
   const player = ev.source;
   const m = ensureManager(player);
-  if (m) void openMainMenu(player, m, (mapId) => changeMap(mapId, player));
+  if (!m) return;
+  if (typeId === MENU_ITEM_ID) void openMainMenu(player, m, (mapId) => changeMap(mapId, player));
+  else m.orderAllies(typeId === RETREAT_ITEM_ID ? "retreat" : "sortie", player);
+});
+
+// Los proyectiles arcanos de los magos se llevan bloques del muro.
+world.afterEvents.projectileHitBlock.subscribe((ev) => {
+  try {
+    if (ev.projectile.typeId !== ENTITY_IDS.arcaneBolt) return;
+    const block = ev.getBlockHit()?.block;
+    const at = block ? block.location : { x: Math.floor(ev.location.x), y: Math.floor(ev.location.y), z: Math.floor(ev.location.z) };
+    manager?.onBoltHit(at);
+  } catch (e) {
+    console.warn(`[bastion] Error al procesar el impacto de un proyectil: ${e}`);
+  }
+});
+
+// Chocar con el punto de mira, o con un soldado pegado al muro, también muerde lo que tenga al lado.
+world.afterEvents.projectileHitEntity.subscribe((ev) => {
+  try {
+    if (ev.projectile.typeId !== ENTITY_IDS.arcaneBolt) return;
+    manager?.onBoltHit({ x: Math.floor(ev.location.x), y: Math.floor(ev.location.y), z: Math.floor(ev.location.z) });
+  } catch (e) {
+    console.warn(`[bastion] Error al procesar el impacto de un proyectil: ${e}`);
+  }
 });
 
 // Cada muerte de un jugador gasta una vida del equipo.

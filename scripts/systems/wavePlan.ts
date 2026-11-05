@@ -55,3 +55,8 @@ export function planWave(def: WaveDef, pointCount: number): SpawnOrder[] {
     delayTicks: Math.floor(i / def.batchSize) * def.batchIntervalTicks,
   }));
 }
+
+/** Cuántos refuerzos salen ahora: los que faltan para el mínimo, sin pasar de la tanda ni de la reserva. */
+export function reinforcementsDue(alive: number, minField: number, reserve: number, batch: number): number {
+  return Math.max(0, Math.min(minField - alive, reserve, batch));
+}

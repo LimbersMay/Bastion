@@ -2,7 +2,7 @@ import type { MapDef } from "./types";
 
 /**
  * Mapa de DEMOSTRACIÓN para un mundo plano (superflat, suelo en y = -61).
- * Sirve para probar el motor sin tener un castillo: la puerta queda en el origen,
+ * Sirve para probar el motor sin tener un castillo: un muro de madera cerca del origen,
  * los invasores salen a unos 40 bloques al sur y las tropas de la brecha aparecen al norte.
  *
  * Para un castillo real: copia este archivo, cambia las coordenadas con `/scriptevent bastion:pos`
@@ -17,7 +17,10 @@ export const castleDemo: MapDef = {
   gates: [
     {
       id: "main",
-      position: { x: 0.5, y: -60, z: 0.5 },
+      position: { x: 0.5, y: -60, z: 3.5 },
+      objective: { x: 0.5, y: -60, z: -1.5 },
+      // Un muro de madera de 3 de grosor; en un mundo plano se puede rodear, es solo para probar el motor.
+      walls: [{ from: { x: -5, y: -60, z: 0 }, to: { x: 5, y: -57, z: 2 }, block: "oak_planks" }],
       breachSpawns: [
         { x: -6.5, y: -60, z: -14.5 },
         { x: 6.5, y: -60, z: -14.5 },
@@ -47,8 +50,8 @@ export const castleDemo: MapDef = {
 
   waves: [
     { name: "Exploradores", groups: [{ unit: "invader_soldier", count: 5 }], batchSize: 2, batchIntervalTicks: 60 },
-    { name: "Asalto", groups: [{ unit: "invader_soldier", count: 9 }], batchSize: 3, batchIntervalTicks: 80 },
-    { name: "Gran ofensiva", groups: [{ unit: "invader_soldier", count: 14 }], batchSize: 4, batchIntervalTicks: 80 },
+    { name: "Asalto", groups: [{ unit: "invader_soldier", count: 7 }, { unit: "invader_wizard", count: 2 }], batchSize: 3, batchIntervalTicks: 80 },
+    { name: "Gran ofensiva", groups: [{ unit: "invader_soldier", count: 10 }, { unit: "invader_wizard", count: 4 }], batchSize: 4, batchIntervalTicks: 80 },
   ],
 
   lives: 5,

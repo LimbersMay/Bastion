@@ -43,15 +43,31 @@ describe("validateMap: puertas", () => {
   });
 });
 
-describe("validateMap: vida de la puerta", () => {
+describe("validateMap: muros y meta", () => {
   const base = MAPS[0];
   const gate = base.gates[0];
+  const wall = gate.walls[0];
 
-  it("acepta los tramos de vida conocidos", () => {
-    expect(validateMap({ ...base, gates: [{ ...gate, health: 600 }] })).toEqual([]);
+  it("exige al menos un tramo de muro", () => {
+    expect(validateMap({ ...base, gates: [{ ...gate, walls: [] }] }).join()).toContain("walls necesita");
   });
 
-  it("rechaza una vida que no es un tramo", () => {
-    expect(validateMap({ ...base, gates: [{ ...gate, health: 500 }] }).join()).toContain("health debe ser");
+  it("rechaza un bloque de muro con estados o mayúsculas", () => {
+    expect(validateMap({ ...base, gates: [{ ...gate, walls: [{ ...wall, block: "Planks[wood_type=oak]" }] }] }).join()).toContain("bloque inválido");
+  });
+
+  it("rechaza un muro de un solo bloque de alto", () => {
+    const flat = { ...wall, to: { ...wall.to, y: wall.from.y } };
+    expect(validateMap({ ...base, gates: [{ ...gate, walls: [flat] }] }).join()).toContain("al menos 2 bloques de alto");
+  });
+
+  it("rechaza una meta dentro del muro", () => {
+    const inside = { x: wall.from.x + 0.5, y: wall.from.y, z: wall.from.z + 0.5 };
+    expect(validateMap({ ...base, gates: [{ ...gate, objective: inside }] }).join()).toContain("objective");
+  });
+
+  it("rechaza un muro enorme", () => {
+    const huge = { ...wall, to: { x: wall.from.x + 100, y: wall.from.y + 100, z: wall.from.z + 100 } };
+    expect(validateMap({ ...base, gates: [{ ...gate, walls: [huge] }] }).join()).toContain("demasiado grande");
   });
 });

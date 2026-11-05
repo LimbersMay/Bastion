@@ -1,0 +1,23 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "bastion:waypoint",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/invader_soldier"
+      },
+      "geometry": {
+        "default": "geometry.bastion_bolt"
+      },
+      "render_controllers": [
+        "controller.render.bastion.default"
+      ],
+      "scripts": {
+        "scale": "0.01"
+      }
+    }
+  }
+}

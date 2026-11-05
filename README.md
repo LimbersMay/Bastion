@@ -2,14 +2,14 @@
 
 Addon de **invasión y defensa** para Minecraft Bedrock. Un castillo, fortaleza o villa amurallada es asediado por oleadas de enemigos. Combates en primera persona junto a aliados con IA. No hay crafteo ni supervivencia: el equipo se entrega al empezar.
 
-Estado: **v0.1.10, probado en el servidor oficial (BDS) y en tablet**; mapas: The Combat Castle y Old Fallen Castle (ver «Qué falta»).
+Estado: **v0.1.18 (etapa 1 de los muros rompibles), probado en el servidor oficial (BDS)**; mapas: The Combat Castle y Old Fallen Castle (ver «Qué falta»).
 
 ## Cómo funciona una partida
 
 1. Entras al mundo y usas el **reloj** (o `/scriptevent bastion:menu`) → *Iniciar asedio*.
-2. Se coloca la **puerta principal** (entidad con barra de vida de jefe), se crean los aliados, se entrega el equipo y se te lleva al punto de inicio.
-3. Cuenta atrás → **oleada 1**. Los invasores salen de los puntos exteriores y atacan a aliados, jugadores y puerta.
-4. Si la puerta cae → **BRECHA**: explosión, alarma y tropas enemigas aparecen dentro.
+2. Se levanta el **muro** de la entrada (bloques reales, sin barra de vida), se crea una meta invisible detrás de él, se crean los aliados, se entrega el equipo y se te lleva al punto de inicio.
+3. Cuenta atrás → **oleada 1**. Los invasores salen de los puntos exteriores y van hacia la meta. Los **magos** se quedan a distancia y lanzan bolas de fuego como las del Ghast que **deshacen el muro por partes** (cada impacto explota, prende fuego y se lleva el bloque tocado y sus vecinos). Si el muro queda escalonado, pueden cruzarlo por encima: en cuanto un invasor llega a la meta también cuenta como brecha. El HUD muestra «Muro N%».
+4. Cuando el muro tiene un hueco por el que cabe un soldado (2 de alto, de lado a lado del grosor) → **BRECHA**: explosión sin daño al terreno, alarma y tropas enemigas aparecen dentro. Los aliados pasan de merodear a atacar.
 5. Al limpiar una oleada hay un descanso y sale la siguiente. Limpiar la última = **victoria**. Cada muerte de un jugador gasta una **vida del equipo**; sin vidas = **derrota**.
 
 ## Requisitos
@@ -41,7 +41,7 @@ npm run art          # regenera el arte provisional
 | --- | --- |
 | `/scriptevent bastion:menu` | Abre el menú (igual que el reloj) |
 | `/scriptevent bastion:start` | Inicia el asedio |
-| `/scriptevent bastion:reset` | Reinicia: borra unidades y puerta |
+| `/scriptevent bastion:reset` | Reinicia: borra unidades y vuelve a levantar los muros |
 | `/scriptevent bastion:pos` | Te dice tus coordenadas, listas para pegar en un mapa |
 | `/scriptevent bastion:map <id>` | Cambia el mapa activo (se guarda en el mundo) |
 
@@ -52,9 +52,10 @@ No hace falta medir nada dentro del juego: las coordenadas se sacan leyendo el m
 1. Descarga el mapa y descomprímelo en una carpeta del repo (añádela a `.gitignore` si es de terceros).
 2. Analízalo con `tools/world-scan.mjs` (ver abajo): suelo, perímetro, puertas, caminos.
 3. Copia `scripts/maps/combat-castle.ts` a `scripts/maps/<mi-mapa>.ts` y cambia id, nombre y coordenadas:
-   - `gates`: una o varias puertas (`id`, `position`, `health`, `barriers`, `breachSpawns`, `breachTroops`). La entidad aparece en `position`; tiene que estar **fuera y alcanzable**: si queda en un hueco cerrado, los invasores se amontonan en la muralla sin poder atacarla.
-   - `health` (por puerta): solo 150, 300, 600, 1200 o 2400 (el motor no deja cambiar la vida máxima desde script, así que `gate_core.json` tiene un evento por nivel). Por defecto 300.
-   - `barriers`: (opcional) los bloques que cierran el paso, como compuertas de madera; se cierran al empezar y desaparecen con la brecha. Se sacan con `world-scan.mjs slice`.
+   - `gates`: una o varias puertas (`id`, `position`, `objective`, `walls`, `breachSpawns`, `breachTroops`).
+   - `walls`: los tramos de muro que cierran el paso (`from`, `to`, `block`: un id sin estados, como `dark_oak_planks`). Se levantan al empezar rellenando **solo el aire** (el terreno del mapa no se toca) y se reponen al reiniciar. El grosor es el lado horizontal más corto: hazlo de varios bloques para que cueste más abrirlo. La puerta se abre cuando **cualquier** tramo tiene un hueco de al menos 2 de alto y todo el grosor; para varias capas, haz un solo tramo más grueso. Solo se rompen los bloques del material indicado.
+   - `objective`: dónde está la meta invisible, **detrás del muro** y en suelo libre. Los invasores la buscan y los magos apuntan a ella, así que ponla de forma que el muro quede entre ellos y ella.
+   - `position`: punto de referencia **fuera del muro** (se usa para comprobar que el mundo es el del mapa y que el terreno está cargado).
    - `playerSpawns`, `allies`: dentro del castillo, sobre suelo libre.
    - `invaderSpawns`: **fuera**, a menos de ~70 bloques de la puerta (el alcance de la IA de los invasores es 80).
    - `breachSpawns`: dentro, para las tropas de la brecha.
@@ -81,7 +82,7 @@ Las coordenadas son las de Minecraft (norte = Z negativo). `tools/bedrock-world.
 ```bash
 node tools/bds.mjs setup <carpeta-del-mundo>     # una vez: copia el mundo y configura el servidor
 npm run mcaddon && node tools/bds.mjs sync       # tras cada build: instala los packs en el servidor
-node tools/bds.mjs run "wait 3" "scriptevent bastion:start" "wait 25" "testfor @e[type=bastion:gate_core]" "kill @e[type=bastion:gate_core]" "wait 5" "testfor @e[type=bastion:invader_soldier]"
+node tools/bds.mjs run "wait 3" "scriptevent bastion:start" "wait 25" "testfor @e[type=bastion:invader_wizard]" "kill @e[type=bastion:invader_wizard]" "wait 5" "testfor @e[type=bastion:invader_soldier]"
 ```
 
 Para probar con la tablet en la misma Wi-Fi: `node tools/bds.mjs serve` deja el servidor encendido (puerto 19132, solo red local; no lo expongas a Internet). Las órdenes se escriben en `<BDS_DIR>/../cmd.txt` (`stop` lo apaga) y hay que hacerse operador (`op <nombre>`) para usar `/scriptevent`.
@@ -99,7 +100,9 @@ scripts/
   game/siegeManager.ts    aplica el estado al mundo (HUD, brecha, victoria)
   systems/wavePlan.ts     reparto de oleadas PURO
   systems/waveSpawner.ts  apariciones programadas
-  systems/gate.ts         puerta (entidad con barra de jefe)
+  systems/gate.ts         meta invisible de cada puerta y comprobaciones del terreno
+  systems/wall.ts         muros: levantarlos, morder bloques, detectar el hueco
+  systems/wallLogic.ts    lógica PURA de los muros (mordisco, hueco, porcentaje)
   systems/loadout.ts      equipo inicial
   maps/                   un archivo por mapa (combat-castle, old-fallen-castle) + validación
   systems/allies.ts       pasa a los aliados de merodear a atacar
@@ -120,14 +123,25 @@ La lógica que no depende de Minecraft está separada para poder probarla con `n
 2. Crea `resource_packs/bastion/entity/<unidad>.entity.json` y su textura 64x64 en `textures/entity/`.
 3. Añade la entrada en `scripts/units/catalog.ts` y su nombre en `texts/*.lang`.
 
+## Órdenes a los aliados
+
+El equipo inicial trae dos objetos. Se usan como el reloj y funcionan durante el asedio:
+
+- **Pluma, «Orden: retirada»:** los aliados corren al punto de reunión del castillo y lo defienden al llegar.
+- **Vara de blaze, «Orden: al ataque»:** salen a buscar a los invasores que puedan alcanzar; si no hay ninguno, esperan junto a la puerta.
+
+Con comandos: `/scriptevent bastion:order retreat` o `sortie`. Para pruebas a gran escala, `/scriptevent bastion:reserve <mínimo> <reserva> <tanda>` cambia los refuerzos de la partida en curso.
+
 ## Qué falta (decisiones y trabajo pendiente)
 
-- **Pruebas:** la lógica pasa `npm test` y el flujo (inicio, puerta, brecha, aliados) se comprobó en BDS. Falta revisar a mano en el juego el aspecto de las skins y las oleadas 2 y 3 completas.
+- **Pruebas:** la lógica pasa `npm test` y el flujo se comprueba en BDS. Falta revisar a mano en el juego el aspecto de las skins y las oleadas completas con magos.
 - **Skins:** `resource_packs/bastion/textures/entity/` usa skins de `assets/skins/warriors/` (64x64, brazos clásicos, con capas), sobre `geometry.bastion.humanoid`. Su autor y licencia no están confirmados; `assets/skins/` está en `.gitignore`.
 - **Old Fallen Castle:** solo hay un frente (el puente); los demás accesos (agua, aire) quedan para futuras unidades.
-- **No incluido aún:** civiles que huyen, rangers y piromantes, unidades aéreas, arietes, armas visibles en las manos, skins y modelo de puerta definitivos (el arte actual es provisional).
-- **Vida de la puerta:** se define por mapa y puerta (`health`, niveles 150/300/600/1200/2400). Para añadir un nivel hay que añadirlo en `GATE_HEALTH_TIERS` y en `gate_core.json`; `npm test` comprueba que coinciden.
-- **Aliados:** merodean cerca de su punto de aparición (grupo `bastion:patrol`) y no atacan hasta la brecha; entonces se les lanza el evento `bastion:fight` y buscan a los invasores.
-- **Barra de jefe:** puede no reaparecer al salir y volver a entrar en su rango (problema conocido con rangos mayores de 55), y el oscurecimiento del cielo no funciona en addons.
+- **No incluido aún:** civiles que huyen, rangers y piromantes, unidades aéreas, arietes, armas visibles en las manos, skins definitivas (el arte actual es provisional).
+- **Muros (etapa 1):** el mago dispara `arcane_bolt`, una copia de la bola de fuego del Ghast (la explosión no rompe piedra, sí madera, y deja fuego), y un guion rompe además los bloques del muro donde choca. No hay reparación entre oleadas (el muro roto sigue roto hasta reiniciar). Como un mob solo dispara a lo que ve, hasta la brecha los magos apuntan a un marcador invisible (`aim_point`) que salta entre los bloques visibles del muro.
+- **Siguientes etapas:** 2) los soldados esperan a que el muro caiga y entonces avanzan; 3) varias capas y más unidades (picos, espadas, arcos, arietes de asedio); reparar el muro en el descanso.
+- **Aliados:** merodean cerca de su punto de aparición (grupo `bastion:patrol`) y atacan a los invasores cercanos que puedan alcanzar; tras la brecha se les lanza el evento `bastion:fight` y los buscan desde más lejos.
+- **Caídas al agua:** quien cae regresa a pie por los hitos de `returnPath` y pelea por el camino; nunca se teletransporta. Solo se apunta a quien nada si uno también está en el agua.
+- **Roadmap:** el plan por fases y dónde nos quedamos está en [docs/ROADMAP.md](docs/ROADMAP.md).
 - **Animaciones:** se usa el control `look_at_target` de Mojang; caminar y atacar son animaciones propias simples (`animations/bastion.animation.json`).
 - **Mapas de terceros:** respeta la licencia del autor; no se incluyen en este repositorio.

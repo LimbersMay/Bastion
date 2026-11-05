@@ -1,9 +1,13 @@
-import { system, type Dimension } from "@minecraft/server";
-import { FAMILY } from "../constants";
+import { system, type Dimension, type Entity } from "@minecraft/server";
+import { ENTITY_IDS, FAMILY, WIZARD_ASSAULT_EVENT } from "../constants";
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
 import { UNITS, type UnitId } from "../units/catalog";
+import { isReturning } from "./returnPath";
 import { findSafeSpawn, isEmbedded } from "./spawnPoint";
 import { planWave } from "./wavePlan";
+
+/** Uno de cada tantos soldados sale por un flanco. Los magos no: su trabajo es el muro de la puerta. */
+const FLANK_EVERY = 3;
 
 /** Aplica al juego los planes de `wavePlan`: programa las apariciones y lleva la cuenta. */
 export class WaveSpawner {
@@ -11,6 +15,8 @@ export class WaveSpawner {
   private pendingSpawns = 0;
   /** Invasores vistos dentro de un bloque en la última revisión (se rescatan si siguen ahí). */
   private suspectIds = new Set<string>();
+  /** Tras la brecha, los magos que aparezcan ya no apuntan a la meta. */
+  private assault = false;
 
   constructor(
     private readonly dimension: Dimension,
@@ -31,9 +37,12 @@ export class WaveSpawner {
     if (!def) return;
     const orders = planWave(def, this.map.invaderSpawns.length);
     this.pendingSpawns += orders.length;
+    const flanks = this.map.flankSpawns ?? [];
+    let soldiers = 0;
 
     for (const order of orders) {
-      const point = this.map.invaderSpawns[order.pointIndex];
+      const toFlank = flanks.length > 0 && order.unit === "invader_soldier" && ++soldiers % FLANK_EVERY === 0;
+      const point = toFlank ? flanks[(soldiers / FLANK_EVERY) % flanks.length] : this.map.invaderSpawns[order.pointIndex];
       const id = system.runTimeout(() => {
         this.timeouts.delete(id);
         this.pendingSpawns = Math.max(0, this.pendingSpawns - 1);
@@ -44,16 +53,19 @@ export class WaveSpawner {
   }
 
   /** Crea una unidad en un sitio libre cerca de `position` (nunca dentro de un bloque). */
-  spawnUnit(unit: UnitId, position: Vec3, jitter = 2): void {
+  spawnUnit(unit: UnitId, position: Vec3, jitter = 2): Entity | undefined {
     const at = findSafeSpawn(this.dimension, position, jitter);
     if (!at) {
       console.warn(`[bastion] Sin sitio libre para ${unit} cerca de ${position.x},${position.y},${position.z}; se omite.`);
-      return;
+      return undefined;
     }
     try {
-      this.dimension.spawnEntity(UNITS[unit].entityId, at);
+      const entity = this.dimension.spawnEntity(UNITS[unit].entityId, at);
+      if (this.assault) this.sendToAssault(entity);
+      return entity;
     } catch (e) {
       console.warn(`[bastion] No se pudo crear ${unit} en ${at.x.toFixed(1)},${at.y},${at.z.toFixed(1)}: ${e}`);
+      return undefined;
     }
   }
 
@@ -81,6 +93,21 @@ export class WaveSpawner {
     this.suspectIds = now;
   }
 
+  /** La brecha ya ocurrió: los magos dejan de apuntar a la meta y atacan a aliados y jugadores. */
+  startAssault(): void {
+    this.assault = true;
+    for (const entity of this.dimension.getEntities({ families: [FAMILY.invader] })) this.sendToAssault(entity);
+  }
+
+  private sendToAssault(entity: Entity): void {
+    if (!entity.isValid || entity.typeId !== ENTITY_IDS.invaderWizard || isReturning(entity)) return;
+    try {
+      entity.triggerEvent(WIZARD_ASSAULT_EVENT);
+    } catch (e) {
+      console.warn(`[bastion] No se pudo pasar un mago al asalto: ${e}`);
+    }
+  }
+
   /** Tropas que aparecen dentro cuando cae esa puerta. */
   spawnBreachTroops(gate: GateDef): void {
     let i = 0;
@@ -99,7 +126,8 @@ export class WaveSpawner {
     this.timeouts.clear();
     this.pendingSpawns = 0;
     this.suspectIds.clear();
-    for (const family of [FAMILY.invader, FAMILY.ally]) {
+    this.assault = false;
+    for (const family of [FAMILY.invader, FAMILY.ally, FAMILY.objective, FAMILY.aim, FAMILY.waypoint, FAMILY.bolt]) {
       for (const entity of this.dimension.getEntities({ families: [family] })) {
         if (entity.isValid) entity.remove();
       }

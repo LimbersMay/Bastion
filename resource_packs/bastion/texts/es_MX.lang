@@ -1,6 +1,12 @@
 entity.bastion:ally_soldier.name=Soldado aliado
 entity.bastion:invader_soldier.name=Soldado invasor
-entity.bastion:gate_core.name=Puerta principal
+entity.bastion:invader_wizard.name=Mago invasor
+entity.bastion:arcane_bolt.name=Proyectil arcano
+entity.bastion:objective.name=Objetivo
+entity.bastion:aim_point.name=Punto de mira
+entity.bastion:waypoint.name=Hito
+entity.bastion:ally_wizard.name=Pirómano aliado
+entity.bastion:ally_bolt.name=Bola de fuego aliada
 item.spawn_egg.entity.bastion:ally_soldier.name=Huevo generador de soldado aliado
 item.spawn_egg.entity.bastion:invader_soldier.name=Huevo generador de soldado invasor
-item.spawn_egg.entity.bastion:gate_core.name=Huevo generador de puerta principal
+item.spawn_egg.entity.bastion:invader_wizard.name=Huevo generador de mago invasor

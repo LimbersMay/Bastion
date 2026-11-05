@@ -119,19 +119,6 @@ const skinsDir = join(root, "resource_packs", "bastion", "textures", "entity");
 // Las skins de los soldados ya no se generan: son las de assets/skins/warriors (ver su README).
 // La función soldierSkin queda por si hace falta un arte provisional para una unidad nueva.
 
-// ---------------------------------------------------------------- puerta (16x16, estirada en cada cara)
-{
-  const c = new Canvas(16, 16);
-  c.rect(0, 0, 16, 16, [107, 74, 43]);
-  for (let y = 0; y < 16; y += 4) c.rect(0, y, 16, 1, [72, 48, 28]); // tablones
-  c.rect(0, 0, 16, 1, [200, 162, 74]);
-  c.rect(0, 15, 16, 1, [200, 162, 74]);
-  c.rect(0, 0, 1, 16, [200, 162, 74]);
-  c.rect(15, 0, 1, 16, [200, 162, 74]);
-  c.rect(7, 6, 2, 4, [200, 162, 74]); // cerradura
-  c.save(join(skinsDir, "gate_core.png"));
-}
-
 // ---------------------------------------------------------------- iconos de los packs (128x128)
 function packIcon(path, bg, fg) {
   const c = new Canvas(128, 128);

@@ -4,7 +4,7 @@ import { ENTITY_IDS } from "../constants";
  * Catálogo de unidades. Añadir una unidad = una entrada aquí + su JSON de BP y RP.
  * No importa `@minecraft/server`, así que se puede usar en los tests.
  */
-export type UnitId = "ally_soldier" | "invader_soldier";
+export type UnitId = "ally_soldier" | "ally_wizard" | "invader_soldier" | "invader_wizard";
 
 export type Side = "ally" | "invader";
 
@@ -22,11 +22,23 @@ export const UNITS: Readonly<Record<UnitId, UnitDef>> = {
     side: "ally",
     label: "Soldado aliado",
   },
+  ally_wizard: {
+    id: "ally_wizard",
+    entityId: ENTITY_IDS.allyWizard,
+    side: "ally",
+    label: "Pirómano aliado",
+  },
   invader_soldier: {
     id: "invader_soldier",
     entityId: ENTITY_IDS.invaderSoldier,
     side: "invader",
     label: "Soldado invasor",
+  },
+  invader_wizard: {
+    id: "invader_wizard",
+    entityId: ENTITY_IDS.invaderWizard,
+    side: "invader",
+    label: "Mago invasor",
   },
 };
 

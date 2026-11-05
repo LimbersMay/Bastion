@@ -1,6 +1,7 @@
 import type { MapDef, Vec3 } from "./types";
-import { GATE_HEALTH_TIERS } from "../constants";
+import { MAX_RETURN_STAGES } from "../constants";
 import { isUnitId } from "../units/catalog";
+import { boxVolume, inBox } from "../systems/wallLogic";
 
 /** Devuelve la lista de problemas de un mapa. Vacía = el mapa es válido. */
 export function validateMap(map: MapDef): string[] {
@@ -22,16 +23,25 @@ export function validateMap(map: MapDef): string[] {
     if (gateIds.has(g.id)) err(`${label}: id repetido "${g.id}".`);
     gateIds.add(g.id);
     checkVec(`${label}.position`, g.position);
-    if (g.health !== undefined && !(GATE_HEALTH_TIERS as readonly number[]).includes(g.health)) {
-      err(`${label}.health debe ser uno de ${GATE_HEALTH_TIERS.join(", ")}.`);
-    }
-    (g.barriers ?? []).forEach((b, i) => {
-      checkVec(`${label}.barriers[${i}].from`, b.from);
-      checkVec(`${label}.barriers[${i}].to`, b.to);
-      if (b.block.trim() === "") err(`${label}.barriers[${i}]: falta el bloque.`);
-      const volume =
-        (Math.abs(b.to.x - b.from.x) + 1) * (Math.abs(b.to.y - b.from.y) + 1) * (Math.abs(b.to.z - b.from.z) + 1);
-      if (!(volume <= 32768)) err(`${label}.barriers[${i}]: demasiado grande (máx. 32768 bloques).`);
+    checkVec(`${label}.objective`, g.objective);
+    if (g.walls.length === 0) err(`${label}: walls necesita al menos un tramo de muro.`);
+    g.blockers?.forEach((b, i) => {
+      checkVec(`${label}.blockers[${i}].from`, b.from);
+      checkVec(`${label}.blockers[${i}].to`, b.to);
+      if (!(boxVolume(b) <= 32768)) err(`${label}.blockers[${i}]: demasiado grande (máx. 32768 bloques).`);
+      if (inBox(g.objective, b)) err(`${label}.blockers[${i}]: la meta (objective) no puede quedar tapada.`);
+    });
+    g.walls.forEach((w, i) => {
+      checkVec(`${label}.walls[${i}].from`, w.from);
+      checkVec(`${label}.walls[${i}].to`, w.to);
+      if (!/^[a-z0-9_]+(:[a-z0-9_]+)?$/.test(w.block)) err(`${label}.walls[${i}]: bloque inválido "${w.block}" (id sin estados, ej. dark_oak_planks).`);
+      const volume = boxVolume(w);
+      if (!(volume <= 32768)) err(`${label}.walls[${i}]: demasiado grande (máx. 32768 bloques).`);
+      if (Math.abs(w.to.y - w.from.y) + 1 < 2) err(`${label}.walls[${i}]: el muro necesita al menos 2 bloques de alto.`);
+      if (inBox(g.objective, w)) err(`${label}.walls[${i}]: la meta (objective) no puede estar dentro del muro.`);
+      if (inBox({ x: Math.floor(g.position.x), y: Math.floor(g.position.y), z: Math.floor(g.position.z) }, w)) {
+        err(`${label}.walls[${i}]: el punto de referencia (position) no puede estar dentro del muro.`);
+      }
     });
     if (g.breachSpawns.length === 0) err(`${label}: breachSpawns necesita al menos un punto.`);
     g.breachSpawns.forEach((v, i) => checkVec(`${label}.breachSpawns[${i}]`, v));
@@ -40,11 +50,38 @@ export function validateMap(map: MapDef): string[] {
       if (!Number.isInteger(t.count) || t.count < 0) err(`${label}.breachTroops[${i}]: cantidad inválida.`);
     });
   });
+  if ((map.returnPath?.length ?? 0) > MAX_RETURN_STAGES) err(`returnPath: máximo ${MAX_RETURN_STAGES} hitos.`);
+  map.returnPath?.forEach((p, i) => checkVec(`returnPath[${i}]`, p));
+
   if (map.playerSpawns.length === 0) err("playerSpawns necesita al menos un punto.");
   map.playerSpawns.forEach((v, i) => checkVec(`playerSpawns[${i}]`, v));
 
   if (map.invaderSpawns.length === 0) err("invaderSpawns necesita al menos un punto.");
   map.invaderSpawns.forEach((v, i) => checkVec(`invaderSpawns[${i}]`, v));
+
+  if (map.flankSpawns && !map.siege) err("flankSpawns requiere siege: sin él, esas unidades no tienen a dónde ir.");
+  map.flankSpawns?.forEach((v, i) => checkVec(`flankSpawns[${i}]`, v));
+  if (map.siege) {
+    checkVec("siege.heart", map.siege.heart);
+    checkVec("siege.zone.from", map.siege.zone.from);
+    checkVec("siege.zone.to", map.siege.zone.to);
+  }
+  map.rallyPoints?.forEach((v, i) => checkVec(`rallyPoints[${i}]`, v));
+  if (map.sortiePoint) checkVec("sortiePoint", map.sortiePoint);
+
+  const r = map.reinforcements;
+  if (r) {
+    if (r.spawns.length === 0) err("reinforcements.spawns necesita al menos un punto.");
+    r.spawns.forEach((v, i) => checkVec(`reinforcements.spawns[${i}]`, v));
+    if (r.units.length === 0) err("reinforcements.units necesita al menos una unidad.");
+    r.units.forEach((u) => {
+      if (!isUnitId(u)) err(`reinforcements.units: unidad desconocida "${u}".`);
+    });
+    for (const [name, value] of [["minField", r.minField], ["reservePerWave", r.reservePerWave], ["batch", r.batch]] as const) {
+      if (!Number.isInteger(value) || value < 0) err(`reinforcements.${name} debe ser un entero sin signo.`);
+    }
+    if (!(r.everySeconds > 0)) err("reinforcements.everySeconds debe ser mayor que 0.");
+  }
 
   map.allies.forEach((a, i) => {
     if (!isUnitId(a.unit)) err(`allies[${i}]: unidad desconocida "${a.unit}".`);
@@ -66,10 +103,11 @@ export function validateMap(map: MapDef): string[] {
   if (map.countdownSeconds < 0) err("countdownSeconds negativo.");
   if (map.intermissionSeconds < 0) err("intermissionSeconds negativo.");
 
-  if (map.tickingArea) {
-    const r = map.tickingArea.radiusChunks;
-    if (!Number.isInteger(r) || r < 1 || r > 4) err("tickingArea.radiusChunks debe ser un entero de 1 a 4.");
-    checkVec("tickingArea.center", map.tickingArea.center);
+  const areas = [...(map.tickingArea ? [map.tickingArea] : []), ...(map.extraTickingAreas ?? [])];
+  for (const area of areas) {
+    const radius = area.radiusChunks;
+    if (!Number.isInteger(radius) || radius < 1 || radius > 4) err("tickingArea.radiusChunks debe ser un entero de 1 a 4.");
+    checkVec("tickingArea.center", area.center);
   }
 
   return errors;

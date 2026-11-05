@@ -6,8 +6,7 @@ import type { MapDef } from "./types";
  *
  * Datos del mapa: suelo de césped en y = -61 (de pie en y = -60); muralla hueca con el
  * perímetro aproximado X -38..42, Z -46..40. La puerta principal es la del NORTE: dos pasos
- * de 3 bloques (x -2..0 y x 4..6), cada uno cerrado por una compuerta de tablones de abeto en
- * z = -43, y entre ellos un hueco de piedra sellado en x = 2. Los caminos del patio
+ * de 3 bloques (x -2..0 y x 4..6), que el addon tapia con tablones de abeto (z -43..-41), y entre ellos un hueco de piedra sellado en x = 2. Los caminos del patio
  * desembocan en esos pasos. Fuera de la muralla hay césped plano en todas direcciones.
  */
 export const combatCastle: MapDef = {
@@ -22,11 +21,13 @@ export const combatCastle: MapDef = {
       // Fuera de la muralla, entre los dos pasos y a la vista de los invasores. (En z = -42 quedaba
       // dentro de un hueco de piedra sellado y nadie podía atacarla.)
       position: { x: 2.5, y: -60, z: -47.5 },
-      health: 600,
-      // Las compuertas del mapa: tablones de abeto de 3x3 en cada paso. Caen con la puerta.
-      barriers: [
-        { from: { x: -2, y: -60, z: -43 }, to: { x: 0, y: -58, z: -43 }, block: "spruce_planks" },
-        { from: { x: 4, y: -60, z: -43 }, to: { x: 6, y: -58, z: -43 }, block: "spruce_planks" },
+      // Meta invisible de los invasores, dentro del patio, frente a los dos pasos.
+      objective: { x: 2.5, y: -60, z: -38.5 },
+      // Los dos pasos tapiados con tablones de abeto (3 bloques de grosor; solo se rellena el aire, la muralla
+      // del mapa no se toca). Basta con abrir uno de los dos para que la puerta caiga.
+      walls: [
+        { from: { x: -2, y: -60, z: -43 }, to: { x: 0, y: -58, z: -41 }, block: "spruce_planks" },
+        { from: { x: 4, y: -60, z: -43 }, to: { x: 6, y: -58, z: -41 }, block: "spruce_planks" },
       ],
       // Dentro, junto a la muralla norte, a ambos lados del camino.
       breachSpawns: [
@@ -59,9 +60,33 @@ export const combatCastle: MapDef = {
   ],
 
   waves: [
-    { name: "Exploradores", groups: [{ unit: "invader_soldier", count: 8 }], batchSize: 3, batchIntervalTicks: 50 },
-    { name: "Asalto", groups: [{ unit: "invader_soldier", count: 14 }], batchSize: 4, batchIntervalTicks: 60 },
-    { name: "Gran ofensiva", groups: [{ unit: "invader_soldier", count: 22 }], batchSize: 5, batchIntervalTicks: 60 },
+    {
+      name: "Exploradores",
+      groups: [
+        { unit: "invader_soldier", count: 6 },
+        { unit: "invader_wizard", count: 2 },
+      ],
+      batchSize: 3,
+      batchIntervalTicks: 50,
+    },
+    {
+      name: "Asalto",
+      groups: [
+        { unit: "invader_soldier", count: 11 },
+        { unit: "invader_wizard", count: 3 },
+      ],
+      batchSize: 4,
+      batchIntervalTicks: 60,
+    },
+    {
+      name: "Gran ofensiva",
+      groups: [
+        { unit: "invader_soldier", count: 17 },
+        { unit: "invader_wizard", count: 5 },
+      ],
+      batchSize: 5,
+      batchIntervalTicks: 60,
+    },
   ],
 
   lives: 5,

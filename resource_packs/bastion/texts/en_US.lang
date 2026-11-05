@@ -1,6 +1,12 @@
 entity.bastion:ally_soldier.name=Allied Soldier
 entity.bastion:invader_soldier.name=Invader Soldier
-entity.bastion:gate_core.name=Main Gate
+entity.bastion:invader_wizard.name=Invader Wizard
+entity.bastion:arcane_bolt.name=Arcane Bolt
+entity.bastion:objective.name=Objective
+entity.bastion:aim_point.name=Aim point
+entity.bastion:waypoint.name=Waypoint
+entity.bastion:ally_wizard.name=Allied pyromancer
+entity.bastion:ally_bolt.name=Allied fireball
 item.spawn_egg.entity.bastion:ally_soldier.name=Allied Soldier Spawn Egg
 item.spawn_egg.entity.bastion:invader_soldier.name=Invader Soldier Spawn Egg
-item.spawn_egg.entity.bastion:gate_core.name=Main Gate Spawn Egg
+item.spawn_egg.entity.bastion:invader_wizard.name=Invader Wizard Spawn Egg

@@ -2,12 +2,12 @@
   "format_version": 2,
   "header": {
     "name": "Bastion BP",
-    "description": "Motor de asedio: puerta con barra de vida, oleadas, brecha y aliados con IA.",
+    "description": "Motor de asedio: muros que los magos derriban por partes, oleadas, brecha y aliados con IA.",
     "uuid": "06c0746f-e81c-4d54-939f-531beafc2dab",
     "version": [
       0,
       1,
-      10
+      18
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         0,
         1,
-        10
+        18
       ]
     },
     {
@@ -33,7 +33,7 @@
       "version": [
         0,
         1,
-        10
+        18
       ]
     }
   ],
@@ -43,7 +43,7 @@
       "version": [
         0,
         1,
-        10
+        18
       ]
     },
     {
