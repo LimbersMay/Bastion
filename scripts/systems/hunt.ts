@@ -1,13 +1,11 @@
 import { GameMode, system, world, type Dimension, type Entity } from "@minecraft/server";
 import { ENTITY_IDS, FAMILY, HUNT_TRAILS, huntTrailTag } from "../constants";
-import type { SiegeDef, Vec3 } from "../maps/types";
-import { advanceProgress, firstPending, markerStep, nearest } from "./huntLogic";
+import type { Vec3 } from "../maps/types";
+import { advanceWithLadders, firstLadder, firstOf, firstPending, markerStep, nearest } from "./huntLogic";
 import { isReturning } from "./returnPath";
-import { classifyBlock, routeSearch, SOLID, type RouteCell, type RouteStep } from "./routeLogic";
-import { inBox } from "./wallLogic";
+import type { RouteJobs } from "./routeJobs";
+import { classifyBlock, type RouteStep } from "./routeLogic";
 
-/** Casillas que puede explorar una búsqueda. Si no llega, el grupo avanza hasta donde pudo y se busca otra. */
-const MAX_NODES = 12000;
 const MEMBERS_MAX = 12;
 /** A esta distancia del punto por donde va un rastro, un soldado atascado se suma a él. */
 const JOIN_H = 8;
@@ -21,11 +19,11 @@ const IDLE_SECONDS = 12;
 const PREY_MOVED = 16;
 /** Tras un intento fallido, tantos ticks hasta el siguiente de ese soldado. */
 const RETRY_TICKS = 15 * 20;
-/** Cada cuánto se olvidan los sitios por donde no se pudo pasar: el terreno cambia con la batalla. */
-const FORGET_TICKS = 60 * 20;
 const REACH = 3.6;
 const HEAD_HEIGHT = 1;
 const BITES_PER_SECOND = 2;
+/** A esta distancia de la columna de una escalera del rastro, el soldado está subiendo o bajando por ella. */
+const LADDER_NEAR = 4;
 
 type Strike = (at: Vec3) => "none" | "hit" | "broken";
 
@@ -33,6 +31,7 @@ interface Trail {
   readonly slot: number;
   readonly marker: Entity;
   readonly steps: readonly RouteStep[];
+  /** Vacío en un rastro sin presa (`lead`): termina al llegar al final. */
   readonly preyId: string;
   readonly goal: Vec3;
   readonly members: Set<string>;
@@ -41,38 +40,37 @@ interface Trail {
   idle: number;
 }
 
-const cellKey = (x: number, y: number, z: number) => (x + 4096) * 8192 * 512 + (z + 4096) * 512 + (y + 64);
 const center = (s: Vec3): Vec3 => ({ x: s.x + 0.5, y: s.y, z: s.z + 0.5 });
 
 /**
  * La caza: el soldado que no puede llegar hasta un enemigo vivo se abre camino hasta él.
- * Una sola búsqueda a la vez, repartida entre ticks. Su ruta se convierte en un rastro: un marcador que los
- * soldados cercanos siguen y que no pasa de un bloque hasta que lo derriban.
+ * Las búsquedas van por la cola común (`routeJobs.ts`), y la caza pide una sola a la vez. Su ruta se convierte en
+ * un rastro: un marcador que los soldados cercanos siguen y que no pasa de un bloque hasta que lo derriban. El
+ * director de inalcanzables (`unreachable.ts`) también abre rastros, con una ruta ya calculada (`guide`).
  */
 export class Hunts {
   private readonly trails = new Map<number, Trail>();
   private readonly slotOf = new Map<string, number>();
   private readonly retryAt = new Map<string, number>();
-  private avoid = new Set<number>();
-  private forgetAt = 0;
+  /** La caza tiene una búsqueda en la cola. */
   private searching = false;
   /** Sube al reiniciar la partida, para descartar la búsqueda que hubiera en curso. */
   private generation = 0;
 
   constructor(
     private readonly dimension: Dimension,
-    private readonly siege: SiegeDef,
-    private readonly isProtected: (at: Vec3) => boolean,
-    private readonly strike: Strike
+    private readonly jobs: RouteJobs,
+    private readonly strike: Strike,
+    /**
+     * `false` en los mapas sin zona de asedio: nadie se abre camino por su cuenta, y los rastros solo sirven al
+     * director de inalcanzables (grupos guiados y bajadas), cuyas rutas ahí no rompen nada.
+     */
+    private readonly hunting = true
   ) {}
 
   /** Revisión de cada segundo. `stalled` son los soldados atascados; `soldiers`, todos. */
   tick(stalled: readonly Entity[], soldiers: readonly Entity[]): void {
     const now = system.currentTick;
-    if (now >= this.forgetAt) {
-      this.avoid = new Set();
-      this.forgetAt = now + FORGET_TICKS;
-    }
     const byId = new Map(soldiers.map((s) => [s.id, s]));
     for (const trail of [...this.trails.values()]) this.updateTrail(trail, byId, now);
 
@@ -81,7 +79,7 @@ export class Hunts {
       if (this.slotOf.has(unit.id) || now < (this.retryAt.get(unit.id) ?? 0)) continue;
       if (!this.joinNearbyTrail(unit)) requester ??= unit;
     }
-    if (requester && !this.searching && this.freeSlot() !== undefined) this.startSearch(requester, now);
+    if (this.hunting && requester && !this.searching && this.freeSlot() !== undefined) this.startSearch(requester, now);
   }
 
   /** Quita los rastros y olvida lo aprendido (al reiniciar la partida). */
@@ -91,7 +89,47 @@ export class Hunts {
     for (const trail of [...this.trails.values()]) this.endTrail(trail);
     this.slotOf.clear();
     this.retryAt.clear();
-    this.avoid = new Set();
+  }
+
+  /**
+   * Abre un rastro con una ruta ya calculada para unos soldados (un grupo del director de inalcanzables). Quien ya
+   * iba por otro rastro lo deja. `false` si no queda rastro libre o no queda nadie.
+   */
+  guide(units: readonly Entity[], prey: Entity, steps: readonly RouteStep[]): boolean {
+    const alive = units.filter((u) => u.isValid).slice(0, MEMBERS_MAX);
+    if (this.freeSlot() === undefined || alive.length === 0 || steps.length < 2) return false;
+    for (const unit of alive) {
+      const old = this.slotOf.get(unit.id);
+      const trail = old === undefined ? undefined : this.trails.get(old);
+      if (trail) this.leave(trail, unit.id, unit);
+    }
+    const trail = this.openTrail(steps, prey.id, prey.location, alive[0]);
+    if (!trail) return false;
+    for (const unit of alive.slice(1)) this.join(trail, unit);
+    return true;
+  }
+
+  /**
+   * Lleva a un soldado por una ruta ya calculada sin presa al final: la bajada de quien quedó en otro piso
+   * (`unreachable.ts`). Espera ante cada escalera como los demás rastros. `false` si no queda rastro libre.
+   */
+  lead(unit: Entity, steps: readonly RouteStep[]): boolean {
+    if (!unit.isValid || this.freeSlot() === undefined || steps.length < 2) return false;
+    const old = this.slotOf.get(unit.id);
+    const trail = old === undefined ? undefined : this.trails.get(old);
+    if (trail) this.leave(trail, unit.id, unit);
+    return this.openTrail(steps, "", steps[steps.length - 1], unit) !== undefined;
+  }
+
+  /** ¿Va por un rastro? */
+  isLed(unitId: string): boolean {
+    return this.slotOf.has(unitId);
+  }
+
+  /** Paso por el que va el rastro hacia esa presa; `undefined` si no hay ninguno. */
+  progressToward(preyId: string): number | undefined {
+    for (const trail of this.trails.values()) if (trail.preyId === preyId) return trail.progress;
+    return undefined;
   }
 
   private freeSlot(): number | undefined {
@@ -130,31 +168,6 @@ export class Hunts {
     return alive.filter((e) => e.isValid && !e.isInWater);
   }
 
-  private cellAt(avoid: ReadonlySet<number>): (x: number, y: number, z: number) => RouteCell {
-    const cache = new Map<number, RouteCell>();
-    return (x, y, z) => {
-      const key = cellKey(x, y, z);
-      let cell = cache.get(key);
-      if (cell) return cell;
-      cell = avoid.has(key) ? SOLID : this.readCell({ x, y, z });
-      cache.set(key, cell);
-      return cell;
-    };
-  }
-
-  /** Lo rompible fuera de la zona de asedio, o lo que protege una puerta, cuenta como si no se pudiera romper. */
-  private readCell(at: Vec3): RouteCell {
-    let cell: RouteCell;
-    try {
-      const block = this.dimension.getBlock(at);
-      cell = block ? classifyBlock(block.typeId) : SOLID;
-    } catch {
-      return SOLID;
-    }
-    const breakable = cell.cost > 0 && cell.cost !== Infinity;
-    return breakable && (!inBox(at, this.siege.zone) || this.isProtected(at)) ? SOLID : cell;
-  }
-
   private startSearch(unit: Entity, now: number): void {
     const prey = nearest(unit.location, this.preys());
     if (!prey) {
@@ -162,47 +175,35 @@ export class Hunts {
       return;
     }
     const generation = this.generation;
-    const start = unit.location;
     const goal = prey.location;
     const preyId = prey.id;
-    const search = routeSearch(start, goal, this.cellAt(this.avoid), { maxNodes: MAX_NODES });
-    const hunts = this;
-    this.searching = true;
-    const started = Date.now();
-    system.runJob(
-      (function* () {
-        try {
-          let step = search.next();
-          while (!step.done) {
-            yield;
-            if (generation !== hunts.generation) return;
-            step = search.next();
-          }
-          hunts.searching = false;
-          const route = step.value;
-          if (!route || route.steps.length < 2) {
-            hunts.retryAt.set(unit.id, system.currentTick + RETRY_TICKS);
-            return;
-          }
-          hunts.openTrail(route.steps, preyId, goal, unit);
-          const breaks = route.steps.reduce((n, s) => n + s.breaks.length, 0);
-          console.log(`[bastion] Caza: ruta de ${route.steps.length} pasos, rompe ${breaks}, ${route.complete ? "llega" : "parcial"}, ${route.nodes} casillas, ${Date.now() - started} ms.`);
-        } catch (e) {
-          if (generation === hunts.generation) hunts.searching = false;
-          console.warn(`[bastion] Error buscando ruta: ${e instanceof Error ? e.message : String(e)}`);
+    const accepted = this.jobs.request({
+      start: unit.location,
+      goal,
+      dig: true,
+      label: "Caza",
+      done: (route) => {
+        if (generation !== this.generation) return;
+        this.searching = false;
+        if (!route || route.steps.length < 2) {
+          this.retryAt.set(unit.id, system.currentTick + RETRY_TICKS);
+          return;
         }
-      })()
-    );
+        this.openTrail(route.steps, preyId, goal, unit);
+      },
+    });
+    if (accepted) this.searching = true;
   }
 
-  private openTrail(steps: readonly RouteStep[], preyId: string, goal: Vec3, unit: Entity): void {
+  private openTrail(steps: readonly RouteStep[], preyId: string, goal: Vec3, unit: Entity): Trail | undefined {
     const slot = this.freeSlot();
-    if (slot === undefined || !unit.isValid) return;
+    if (slot === undefined || !unit.isValid) return undefined;
     const marker = this.dimension.spawnEntity(ENTITY_IDS.waypoint, center(steps[0]));
     marker.addTag(huntTrailTag(slot));
     const trail: Trail = { slot, marker, steps, preyId, goal, members: new Set(), progress: 0, seconds: 0, idle: 0 };
     this.trails.set(slot, trail);
     this.join(trail, unit);
+    return trail;
   }
 
   private endTrail(trail: Trail): void {
@@ -221,8 +222,8 @@ export class Hunts {
       else alive.push(unit);
     }
     trail.seconds++;
-    const prey = world.getEntity(trail.preyId);
-    const preyGone = !prey || Math.hypot(prey.location.x - trail.goal.x, prey.location.y - trail.goal.y, prey.location.z - trail.goal.z) > PREY_MOVED;
+    const prey = trail.preyId === "" ? undefined : world.getEntity(trail.preyId);
+    const preyGone = trail.preyId !== "" && (!prey || Math.hypot(prey.location.x - trail.goal.x, prey.location.y - trail.goal.y, prey.location.z - trail.goal.z) > PREY_MOVED);
     if (alive.length === 0 || !marker || preyGone || trail.seconds > TRAIL_MAX_SECONDS) {
       this.endTrail(trail);
       return;
@@ -234,10 +235,14 @@ export class Hunts {
     };
     const positions = alive.map((u) => u.location);
     const before = trail.progress;
-    trail.progress = advanceProgress(trail.steps, trail.progress, firstPending(trail.steps, trail.progress, isSolid), positions);
-    const pending = firstPending(trail.steps, trail.progress, isSolid);
-    const digging = pending !== undefined && this.bite(trail.steps[pending], positions, isSolid);
-    trail.idle = digging || trail.progress !== before ? 0 : trail.idle + 1;
+    trail.progress = advanceWithLadders(trail.steps, trail.progress, firstPending(trail.steps, trail.progress, isSolid), positions);
+    const toBreak = firstPending(trail.steps, trail.progress, isSolid);
+    const ladder = firstLadder(trail.steps, trail.progress);
+    const pending = firstOf(toBreak, ladder);
+    const digging = toBreak !== undefined && toBreak === pending && this.bite(trail.steps[toBreak], positions, isSolid);
+    // Quien está junto a una escalera o va por ella (`ladders.ts`) no cuenta como parado.
+    const climbing = ladder !== undefined && ladder === pending && this.nearLadder(trail.steps[ladder], positions);
+    trail.idle = digging || climbing || trail.progress !== before ? 0 : trail.idle + 1;
 
     const lastIndex = trail.steps.length - 1;
     if (trail.progress >= lastIndex) {
@@ -246,13 +251,19 @@ export class Hunts {
     }
     if (trail.idle >= IDLE_SECONDS) {
       for (const s of trail.steps.slice(trail.progress + 1, trail.progress + 3)) {
-        if (s.breaks.length === 0) this.avoid.add(cellKey(s.x, s.y, s.z));
+        if (s.breaks.length === 0) this.jobs.avoidCell(s);
       }
       this.endTrail(trail);
       return;
     }
     const target = center(trail.steps[markerStep(trail.progress, pending, lastIndex)]);
     if (Math.hypot(marker.x - target.x, marker.y - target.y, marker.z - target.z) > 0.1) trail.marker.teleport(target);
+  }
+
+  /** Alguno está a pocos bloques de la columna de la escalera de ese paso, a cualquier altura. */
+  private nearLadder(step: RouteStep, positions: readonly Vec3[]): boolean {
+    const col = step.ladder?.cells[0];
+    return !!col && positions.some((p) => Math.hypot(p.x - (col.x + 0.5), p.z - (col.z + 0.5)) <= LADDER_NEAR);
   }
 
   /** Hasta dos golpes por segundo a lo que corta el paso, si algún soldado del rastro lo tiene al alcance. */

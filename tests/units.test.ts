@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { UNIT_LIST, unitOf, UNITS } from "../scripts/units/catalog";
-import { baseDamage, behaviorEntity, modeEvent, skinGroup, unitFiles, unitRenderControllers, WEAPON_BONUS } from "../tools/units/generate";
+import { baseDamage, behaviorEntity, modeEvent, type Range, skinGroup, unitFiles, unitRenderControllers, VARIATION, WEAPON_BONUS } from "../tools/units/generate";
 
 const read = (path: string) => readFileSync(path, "utf-8").replace(/\r\n/g, "\n");
 
@@ -78,10 +78,30 @@ describe("fichas de unidad", () => {
       const entity = behaviorEntity(unit)["minecraft:entity"] as { components: Record<string, any> };
       const bonus = unit.weapon ? WEAPON_BONUS[unit.weapon] : 0;
       expect(bonus, `${unit.id}: ${unit.weapon}`).toBeDefined();
-      expect(entity.components["minecraft:attack"].damage + bonus).toBe(unit.damage);
+      expect(middle(entity.components["minecraft:attack"].damage) + bonus).toBe(unit.damage);
       expect(baseDamage(unit)).toBe(unit.damage - bonus);
       if (unit.weapon) expect(entity.components["minecraft:equipment"].slot_drop_chance[0].drop_chance).toBe(0);
     }
+  });
+
+  it("vida y golpe varían un 10 % alrededor de la ficha; las cifras pequeñas quedan fijas", () => {
+    for (const unit of UNIT_LIST) {
+      const entity = behaviorEntity(unit)["minecraft:entity"] as { components: Record<string, any> };
+      const bonus = unit.weapon ? WEAPON_BONUS[unit.weapon] : 0;
+      const health = entity.components["minecraft:health"];
+      expect(health.max, `${unit.id}: sin máximo fijo, el juego toma lo que sale`).toBeUndefined();
+      for (const [value, generated] of [
+        [unit.health, health.value],
+        [unit.damage, shift(entity.components["minecraft:attack"].damage, bonus)],
+      ] as const) {
+        expect(middle(generated), unit.id).toBe(value);
+        const spread = typeof generated === "number" ? 0 : generated.range_max - value;
+        expect(spread, unit.id).toBe(Math.round(value * VARIATION));
+      }
+    }
+    expect(behaviorEntity(UNITS.ally_soldier)["minecraft:entity"]).toMatchObject({
+      components: { "minecraft:health": { value: { range_min: 54, range_max: 66 } }, "minecraft:attack": { damage: { range_min: 3, range_max: 5 } } },
+    });
   });
 
   it("se encuentra la ficha de una entidad por su id", () => {
@@ -89,3 +109,13 @@ describe("fichas de unidad", () => {
     expect(unitOf("bastion:arcane_bolt")).toBeUndefined();
   });
 });
+
+/** Centro de una cifra del juego, fija o con rango. */
+function middle(value: number | Range): number {
+  return typeof value === "number" ? value : (value.range_min + value.range_max) / 2;
+}
+
+/** La misma cifra, fija o con rango, desplazada en `by`. */
+function shift(value: number | Range, by: number): number | Range {
+  return typeof value === "number" ? value + by : { range_min: value.range_min + by, range_max: value.range_max + by };
+}

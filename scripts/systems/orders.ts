@@ -7,14 +7,17 @@ import {
   ALLY_SORTIE_EVENT,
   ENTITY_IDS,
   FAMILY,
+  KEEP_TAG,
   MAX_POSTS,
   postMarkerTag,
   postTag,
   RALLY_TAG,
   SORTIE_TAG,
+  TO_KEEP_TAG,
 } from "../constants";
 import type { MapDef, Vec3 } from "../maps/types";
 import { unitOf } from "../units/catalog";
+import type { Layer } from "./moraleLogic";
 import { assignPosts, choosePost } from "./postLogic";
 import { isReturning } from "./returnPath";
 
@@ -31,6 +34,8 @@ export type AllyOrder = "defend" | "retreat" | "sortie";
 const RALLY_REACHED = 10;
 /** A esta distancia de su puesto ya ha llegado. */
 const POST_REACHED = 3;
+/** A esta distancia de la torre ya ha llegado. */
+const KEEP_REACHED = 5;
 /** Quien defiende su puesto y se aleja más que esto persiguiendo a alguien, vuelve a él. */
 const POST_LEASH = 16;
 /** Quien no ha llegado a este tiempo se queda donde esté y pelea: nadie corre para siempre sin defenderse. */
@@ -68,6 +73,7 @@ export function ensureRallyPoints(dimension: Dimension, map: MapDef): void {
   if (map.sortiePoint) ensureMarker(dimension, map.sortiePoint, [SORTIE_TAG]);
   map.rallyPoints?.forEach((point, index) => ensureMarker(dimension, point, [RALLY_TAG, rallyTag(index)]));
   map.defensePosts?.slice(0, MAX_POSTS).forEach((post, index) => ensureMarker(dimension, post.at, [postMarkerTag(index)]));
+  if (map.keep) ensureMarker(dimension, map.keep, [KEEP_TAG]);
 }
 
 export class AllyOrders {
@@ -76,6 +82,8 @@ export class AllyOrders {
   private readonly retreating = new Map<string, number>();
   /** Puesto de cada aliado con la orden de retirada; sin entrada, va al patio. */
   private readonly postOf = new Map<string, number>();
+  /** Quien se ha replegado por la moral y hasta dónde (patio o torre). La orden siguiente lo deshace. */
+  private readonly fallback = new Map<string, Layer>();
 
   constructor(
     private readonly dimension: Dimension,
@@ -94,14 +102,18 @@ export class AllyOrders {
     return (this.map.defensePosts ?? []).slice(0, MAX_POSTS);
   }
 
-  /** Da la orden a todos. Quien regresa del agua la recibe al terminar el regreso. Devuelve a cuántos llegó. */
-  give(order: AllyOrder, breached: boolean): number {
+  /**
+   * Da la orden a todos menos a quien dice `exempt` (la escolta del cuerno, que va con su jugador y la retoma al
+   * terminar). Quien regresa del agua la recibe al terminar el regreso. Devuelve a cuántos llegó.
+   */
+  give(order: AllyOrder, breached: boolean, exempt: (id: string) => boolean = () => false): number {
     this.order = order;
     this.retreating.clear();
     this.postOf.clear();
+    this.fallback.clear();
     const everyone = this.dimension.getEntities({ families: [FAMILY.ally] }).filter((a) => a.isValid);
     for (const ally of everyone) this.leavePost(ally);
-    const allies = everyone.filter((a) => !isReturning(a));
+    const allies = everyone.filter((a) => !isReturning(a) && !exempt(a.id));
     if (order === "retreat") {
       const units = allies.map((a) => ({ id: a.id, role: unitOf(a.typeId)?.role ?? "melee", at: a.location }));
       for (const [id, post] of assignPosts(units, this.posts)) if (post !== undefined) this.postOf.set(id, post);
@@ -125,21 +137,74 @@ export class AllyOrders {
   private leavePost(ally: Entity): void {
     this.postOf.delete(ally.id);
     for (let i = 0; i < MAX_POSTS; i++) if (ally.hasTag(postTag(i))) ally.removeTag(postTag(i));
+    if (ally.hasTag(TO_KEEP_TAG)) ally.removeTag(TO_KEEP_TAG);
+  }
+
+  /**
+   * Deja de ocuparse de un aliado que pasa a la escolta del cuerno: sin puesto, ni carrera hacia él, ni repliegue.
+   * Al terminar la escolta, `applyTo` le devuelve a la orden vigente.
+   */
+  forget(ally: Entity): void {
+    this.retreating.delete(ally.id);
+    this.fallback.delete(ally.id);
+    this.leavePost(ally);
+  }
+
+  /** Hasta dónde se ha replegado un aliado por la moral; `field` si no se ha replegado. */
+  layerOf(id: string): Layer {
+    return this.fallback.get(id) ?? "field";
+  }
+
+  get hasCourtyard(): boolean {
+    return (this.map.rallyPoints?.length ?? 0) > 0;
+  }
+
+  get hasKeep(): boolean {
+    return this.map.keep !== undefined;
+  }
+
+  /**
+   * Repliegue por la moral: el aliado corre al patio o a la torre sin pararse a pelear (como la retirada) y, al
+   * llegar, lo defiende. No cambia la orden de los demás.
+   */
+  fallBack(ally: Entity, layer: Exclude<Layer, "field">): void {
+    try {
+      this.leavePost(ally);
+      if (layer === "keep") ally.addTag(TO_KEEP_TAG);
+      ally.triggerEvent(ALLY_RETREAT_EVENT);
+      this.retreating.set(ally.id, system.currentTick);
+      this.fallback.set(ally.id, layer);
+    } catch (e) {
+      console.warn(`[bastion] No se pudo replegar a un aliado: ${e}`);
+    }
+  }
+
+  /** Quienes se replegaron por la moral vuelven a cumplir la orden vigente (en el descanso). Devuelve cuántos. */
+  recall(breached: boolean): number {
+    let count = 0;
+    const total = this.fallback.size;
+    for (const id of [...this.fallback.keys()]) {
+      this.fallback.delete(id);
+      this.retreating.delete(id);
+      const ally = world.getEntity(id);
+      if (!ally?.isValid || isReturning(ally)) continue;
+      this.applyTo(ally, breached);
+      count++;
+    }
+    if (total > 0) console.log(`[bastion] Descanso: ${count} de ${total} aliados replegados siguen vivos y vuelven a su sitio.`);
+    return count;
   }
 
   /** Pone a una unidad a cumplir la orden vigente. */
   applyTo(ally: Entity, breached: boolean): void {
     try {
+      // Quien vuelve del agua (o cumple de nuevo la orden) ya no está replegado.
+      this.fallback.delete(ally.id);
       if (this.order !== "retreat") this.leavePost(ally);
       switch (this.order) {
-        case "retreat": {
-          this.takePost(ally);
-          const post = this.postOf.get(ally.id);
-          if (post !== undefined && !ally.hasTag(postTag(post))) ally.addTag(postTag(post));
-          ally.triggerEvent(ALLY_RETREAT_EVENT);
-          this.retreating.set(ally.id, system.currentTick);
+        case "retreat":
+          this.sendToPost(ally);
           break;
-        }
         case "sortie":
           ally.triggerEvent(ALLY_SORTIE_EVENT);
           break;
@@ -152,16 +217,45 @@ export class AllyOrders {
     }
   }
 
-  /** Los refuerzos aparecen lejos de la pelea: salvo orden de retirada, van a buscarla. */
+  /**
+   * Corre a un puesto libre (o, sin puesto, al patio) sin pararse a pelear y, al llegar, lo defiende (`tick`).
+   * Es lo que hace la retirada, y también los refuerzos y quien sale del castillo con la orden de defender.
+   */
+  private sendToPost(ally: Entity): void {
+    this.takePost(ally);
+    const post = this.postOf.get(ally.id);
+    if (post !== undefined && !ally.hasTag(postTag(post))) ally.addTag(postTag(post));
+    ally.triggerEvent(ALLY_RETREAT_EVENT);
+    this.retreating.set(ally.id, system.currentTick);
+  }
+
+  /**
+   * Los refuerzos aparecen en el patio. Con la orden de ataque van a buscar la pelea; si no, refuerzan un puesto de
+   * defensa (elegido por Limbers, 2026-11-07: antes salían de uno en uno a por el invasor más cercano, aunque
+   * fueran 40). Sin puestos ni patio, defienden donde aparecen.
+   */
   deploy(ally: Entity): void {
-    if (this.order === "retreat") {
-      this.applyTo(ally, false);
-      return;
-    }
     try {
-      ally.triggerEvent(ALLY_SORTIE_EVENT);
+      if (this.order === "sortie") ally.triggerEvent(ALLY_SORTIE_EVENT);
+      else if (this.canRetreat) this.sendToPost(ally);
+      else this.applyTo(ally, false);
     } catch (e) {
       console.warn(`[bastion] No se pudo desplegar un refuerzo: ${e}`);
+    }
+  }
+
+  /**
+   * Quien ha salido del castillo con la orden de defender o la de retirada vuelve a un puesto. Devuelve `false` si
+   * ya iba de camino o no hay a dónde volver.
+   */
+  bringBack(ally: Entity): boolean {
+    if (this.order === "sortie" || !this.canRetreat || this.retreating.has(ally.id)) return false;
+    try {
+      this.sendToPost(ally);
+      return true;
+    } catch (e) {
+      console.warn(`[bastion] No se pudo hacer volver a un aliado: ${e}`);
+      return false;
     }
   }
 
@@ -181,8 +275,10 @@ export class AllyOrders {
       }
       if (isReturning(ally)) continue;
       const post = this.postOf.get(id);
-      const arrived =
-        post !== undefined
+      const toKeep = this.fallback.get(id) === "keep" && this.map.keep !== undefined;
+      const arrived = toKeep
+        ? distanceSq(ally.location, this.map.keep!) <= KEEP_REACHED ** 2
+        : post !== undefined
           ? distanceSq(ally.location, this.posts[post].at) <= POST_REACHED ** 2
           : points.some((p) => distanceSq(ally.location, p) <= RALLY_REACHED ** 2);
       if (!arrived && system.currentTick - since < RETREAT_MAX_TICKS) continue;
@@ -193,8 +289,11 @@ export class AllyOrders {
         console.warn(`[bastion] No se pudo pasar a defensa a un aliado: ${e}`);
         continue;
       }
-      // El marcador hacia el que iba (su puesto o el punto de reunión más cercano) se cambia por otro.
-      if (post !== undefined) {
+      // El marcador hacia el que iba (su puesto, la torre o el punto de reunión más cercano) se cambia por otro.
+      if (toKeep) {
+        const at = this.map.keep!;
+        toRenew.set(KEEP_TAG, () => renewMarker(this.dimension, at, [KEEP_TAG]));
+      } else if (post !== undefined) {
         const at = this.posts[post].at;
         toRenew.set(postMarkerTag(post), () => renewMarker(this.dimension, at, [postMarkerTag(post)]));
       } else if (points.length > 0) {
@@ -227,5 +326,6 @@ export class AllyOrders {
     this.order = "defend";
     this.retreating.clear();
     this.postOf.clear();
+    this.fallback.clear();
   }
 }

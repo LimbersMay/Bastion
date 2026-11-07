@@ -1,5 +1,5 @@
 import { GameMode, system, type Dimension, type Entity } from "@minecraft/server";
-import { FAMILY, TICKS_PER_SECOND, WIZARD_ASSAULT_EVENT } from "../constants";
+import { FAMILY, SQUAD_WAIT_TAG, TICKS_PER_SECOND, WIZARD_ASSAULT_EVENT } from "../constants";
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
 import { isShooter, unitOf, UNITS, type UnitId } from "../units/catalog";
 import { isApproaching, isReturning, startApproach } from "./returnPath";
@@ -123,6 +123,8 @@ export class WaveSpawner {
       // Magos y arqueros: quietos disparando de lejos no están atascados.
       const caster = isShooter(unitOf(entity.typeId));
       if ((this.map.siege && !caster) || (isReturning(entity) && !isApproaching(entity, this.map))) continue;
+      // La reserva de un grupo espera quieta a propósito.
+      if (entity.hasTag(SQUAD_WAIT_TAG)) continue;
       const track = trackStill(this.still.get(entity.id), at, now);
       tracks.set(entity.id, track);
       if (stillFor(track, now) < STILL_SECONDS * TICKS_PER_SECOND) continue;

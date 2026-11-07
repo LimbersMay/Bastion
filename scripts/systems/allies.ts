@@ -5,11 +5,11 @@ import { isReturning } from "./returnPath";
 /**
  * Hasta la brecha los aliados patrullan cerca de donde aparecieron (no se amontonan en la puerta) y solo
  * atacan a los invasores que tengan cerca y puedan alcanzar. Al caer la puerta se les lanza el evento
- * `bastion:fight` y pasan a buscarlos desde más lejos.
+ * `bastion:fight` y pasan a buscarlos desde más lejos. La escolta del cuerno (`exempt`) sigue con su jugador.
  */
-export function unleashAllies(dimension: Dimension): void {
+export function unleashAllies(dimension: Dimension, exempt: (id: string) => boolean = () => false): void {
   for (const ally of dimension.getEntities({ families: [FAMILY.ally] })) {
-    if (!ally.isValid || isReturning(ally)) continue;
+    if (!ally.isValid || isReturning(ally) || exempt(ally.id)) continue;
     try {
       ally.triggerEvent(ALLY_FIGHT_EVENT);
     } catch (e) {

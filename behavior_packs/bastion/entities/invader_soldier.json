@@ -25,37 +25,92 @@
               "filters": {
                 "all_of": [
                   {
-                    "any_of": [
+                    "all_of": [
                       {
-                        "test": "is_family",
-                        "subject": "other",
-                        "value": "bastion_ally"
+                        "any_of": [
+                          {
+                            "test": "is_family",
+                            "subject": "other",
+                            "value": "bastion_ally"
+                          },
+                          {
+                            "test": "is_family",
+                            "subject": "other",
+                            "value": "player"
+                          }
+                        ]
                       },
                       {
-                        "test": "is_family",
-                        "subject": "other",
-                        "value": "player"
+                        "any_of": [
+                          {
+                            "test": "in_water",
+                            "subject": "other",
+                            "operator": "!=",
+                            "value": true
+                          },
+                          {
+                            "test": "in_water",
+                            "subject": "self",
+                            "value": true
+                          }
+                        ]
                       }
                     ]
                   },
                   {
-                    "any_of": [
-                      {
-                        "test": "in_water",
-                        "subject": "other",
-                        "operator": "!=",
-                        "value": true
-                      },
-                      {
-                        "test": "in_water",
-                        "subject": "self",
-                        "value": true
-                      }
-                    ]
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_squad"
                   }
                 ]
               },
               "max_dist": 24
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "any_of": [
+                          {
+                            "test": "is_family",
+                            "subject": "other",
+                            "value": "bastion_ally"
+                          },
+                          {
+                            "test": "is_family",
+                            "subject": "other",
+                            "value": "player"
+                          }
+                        ]
+                      },
+                      {
+                        "any_of": [
+                          {
+                            "test": "in_water",
+                            "subject": "other",
+                            "operator": "!=",
+                            "value": true
+                          },
+                          {
+                            "test": "in_water",
+                            "subject": "self",
+                            "value": true
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_squad"
+                  }
+                ]
+              },
+              "max_dist": 8
             }
           ],
           "must_reach": true,
@@ -215,33 +270,14 @@
               "filters": {
                 "all_of": [
                   {
-                    "any_of": [
-                      {
-                        "test": "is_family",
-                        "subject": "other",
-                        "value": "bastion_ally"
-                      },
-                      {
-                        "test": "is_family",
-                        "subject": "other",
-                        "value": "player"
-                      }
-                    ]
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_0"
                   },
                   {
-                    "any_of": [
-                      {
-                        "test": "in_water",
-                        "subject": "other",
-                        "operator": "!=",
-                        "value": true
-                      },
-                      {
-                        "test": "in_water",
-                        "subject": "self",
-                        "value": true
-                      }
-                    ]
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_0"
                   }
                 ]
               },
@@ -250,12 +286,339 @@
             },
             {
               "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "bastion_objective"
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_1"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_2"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_3"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_4"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_4"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_5"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_5"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_6"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_6"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_7"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_7"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_8"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_8"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_9"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_9"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_10"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_10"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_11"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_11"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_12"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_12"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_13"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_13"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_14"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_14"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_15"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_15"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "any_of": [
+                          {
+                            "test": "is_family",
+                            "subject": "other",
+                            "value": "bastion_ally"
+                          },
+                          {
+                            "test": "is_family",
+                            "subject": "other",
+                            "value": "player"
+                          }
+                        ]
+                      },
+                      {
+                        "any_of": [
+                          {
+                            "test": "in_water",
+                            "subject": "other",
+                            "operator": "!=",
+                            "value": true
+                          },
+                          {
+                            "test": "in_water",
+                            "subject": "self",
+                            "value": true
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_squad_wait"
+                  }
+                ]
               },
               "max_dist": 256,
               "priority": 2
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_objective"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_squad_wait"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 3
             }
           ],
           "scan_interval": 40
@@ -708,8 +1071,10 @@
         "height": 1.9
       },
       "minecraft:health": {
-        "value": 40,
-        "max": 40
+        "value": {
+          "range_min": 36,
+          "range_max": 44
+        }
       },
       "minecraft:movement": {
         "value": 0.28
@@ -722,7 +1087,10 @@
         "max": 100
       },
       "minecraft:attack": {
-        "damage": 4
+        "damage": {
+          "range_min": 3,
+          "range_max": 5
+        }
       },
       "minecraft:equipment": {
         "table": "loot_tables/entities/invader_soldier_gear.json",

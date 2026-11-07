@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
+import { HOLD_ENGAGE } from "../scripts/systems/stanceLogic";
+import { RESELECT_TARGETS } from "../tools/units/behavior";
 import { describe, expect, it } from "vitest";
 import { isUnitId, UNIT_LIST, UNITS } from "../scripts/units/catalog";
-import { ALLY_FIGHT_EVENT, ALLY_PATROL_EVENT, ENTITY_IDS, FAMILY, HUNT_TRAILS, huntTrailTag, INTRUDER_TAG, MAX_POSTS, MAX_RETURN_ROUTES, postMarkerTag, postTag, MAX_RETURN_STAGES, RALLY_TAG, returnWaypointTag, RETURN_EVENT, SOLDIER_MARCH_EVENT, WIZARD_ASSAULT_EVENT, WIZARD_SIEGE_EVENT } from "../scripts/constants";
+import { HOLD_LINE_TAG, ALLY_ESCORT_EVENT, ALLY_FIGHT_EVENT, ALLY_GUARD_EVENT, escortMarkerTag, escortTag, MAX_ESCORTS, ALLY_PATROL_EVENT, ENTITY_IDS, FAMILY, HUNT_TRAILS, huntTrailTag, INTRUDER_TAG, MAX_POSTS, MAX_RETURN_ROUTES, postMarkerTag, postTag, MAX_RETURN_STAGES, RALLY_TAG, returnWaypointTag, RETURN_EVENT, SOLDIER_MARCH_EVENT, WIZARD_ASSAULT_EVENT, WIZARD_SIEGE_EVENT, MAX_SQUADS, squadMarkerTag, SQUAD_ENGAGE, SQUAD_TAG, SQUAD_WAIT_TAG, KEEP_TAG, TO_KEEP_TAG } from "../scripts/constants";
 
 const readEntity = (name: string) =>
   JSON.parse(readFileSync(`behavior_packs/bastion/entities/${name}.json`, "utf-8"))["minecraft:entity"];
@@ -110,19 +112,36 @@ describe("inteligencia de objetivos", () => {
     expect(goal.priority).toBeGreaterThan(foes.priority);
   });
 
-  it("el soldado invasor caza: sigue su rastro, si no va al enemigo vivo más cercano, y la puerta queda para el final", () => {
+  it("el soldado invasor caza: sigue su rastro, si no su grupo, si no va al enemigo vivo más cercano, y la puerta queda para el final", () => {
     const types = readEntity("invader_soldier").component_groups["bastion:march"]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types as { priority: number }[];
-    expect(types).toHaveLength(HUNT_TRAILS + 2);
+    expect(types).toHaveLength(HUNT_TRAILS + MAX_SQUADS + 2);
     for (let slot = 0; slot < HUNT_TRAILS; slot++) {
       expect(types[slot].priority).toBe(0);
       expect(JSON.stringify(types[slot])).toContain(huntTrailTag(slot));
     }
-    const [prey, gate] = types.slice(HUNT_TRAILS);
-    expect(prey.priority).toBe(1);
+    for (let slot = 0; slot < MAX_SQUADS; slot++) {
+      expect(types[HUNT_TRAILS + slot].priority).toBe(1);
+      expect(JSON.stringify(types[HUNT_TRAILS + slot])).toContain(squadMarkerTag(slot));
+    }
+    const [prey, gate] = types.slice(HUNT_TRAILS + MAX_SQUADS);
+    expect(prey.priority).toBe(2);
     expect(JSON.stringify(prey)).toContain(FAMILY.ally);
     expect(JSON.stringify(prey)).toContain("player");
-    expect(gate.priority).toBe(2);
+    // La reserva de un grupo no va a por nadie.
+    expect(JSON.stringify(prey)).toContain(SQUAD_WAIT_TAG);
+    expect(gate.priority).toBe(3);
     expect(JSON.stringify(gate)).toContain(FAMILY.objective);
+  });
+
+  it("en un grupo solo se lanzan contra quien tienen cerca; sin grupo, como siempre", () => {
+    const march = readEntity("invader_soldier").component_groups["bastion:march"]["minecraft:behavior.nearest_attackable_target"];
+    const sortie = readEntity("ally_soldier").component_groups["bastion:sortie"]["minecraft:behavior.nearest_attackable_target"];
+    for (const goal of [march, sortie]) {
+      const [loose, grouped] = goal.entity_types;
+      expect(loose.max_dist).toBe(24);
+      expect(JSON.stringify(loose.filters)).toContain(SQUAD_TAG);
+      expect(grouped.max_dist).toBe(SQUAD_ENGAGE);
+    }
   });
 
   it("todas las unidades abren puertas, en tierra evitan el agua y al regresar del agua nadan", () => {
@@ -171,13 +190,69 @@ describe("ally_wizard.json", () => {
   });
 });
 
-describe("órdenes a los aliados", () => {
-  const groups = ["bastion:patrol", "bastion:fight", "bastion:returning", "bastion:hold", "bastion:retreat", "bastion:sortie"];
-
-  for (const { id: name } of UNIT_LIST.filter((u) => u.side === "ally")) {
+describe("escolta del cuerno", () => {
+  for (const { id: name } of UNIT_LIST.filter((u) => u.side === "ally" && u.role === "melee")) {
     const entity = readEntity(name);
 
+    it(`${name}: de camino pelea con quien tiene encima y, si no, sigue el marcador de su jugador`, () => {
+      const types = entity.component_groups[ALLY_ESCORT_EVENT]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types;
+      const foes = types.filter((t: { priority: number }) => t.priority < 2);
+      const markers = types.filter((t: { priority: number }) => t.priority === 2);
+      expect(JSON.stringify(foes[0])).toContain(FAMILY.invader);
+      for (const f of foes) expect(f.max_dist).toBeLessThanOrEqual(8);
+      expect(markers).toHaveLength(MAX_ESCORTS);
+      markers.forEach((m: unknown, slot: number) => {
+        expect(JSON.stringify(m)).toContain(`"${escortTag(slot)}"`);
+        expect(JSON.stringify(m)).toContain(`"${escortMarkerTag(slot)}"`);
+      });
+    });
+
+    it(`${name}: al lado de su jugador vigila sin seguir ningún marcador`, () => {
+      const guard = entity.component_groups[ALLY_GUARD_EVENT];
+      expect(guard["minecraft:behavior.melee_attack"]).toBeDefined();
+      expect(guard["minecraft:behavior.random_stroll"]).toBeDefined();
+      expect(JSON.stringify(guard)).not.toContain("bastion_escortmark_");
+    });
+  }
+});
+
+describe("aliados en desventaja: aguantan en su sitio", () => {
+  for (const { id: name } of UNIT_LIST.filter((u) => u.side === "ally" && u.role === "melee")) {
+    const entity = readEntity(name);
+    const holding = JSON.stringify({ test: "has_tag", subject: "self", value: HOLD_LINE_TAG });
+    const holds = (e: { filters: unknown }) => JSON.stringify(e.filters).includes(holding);
+
+    for (const mode of ["bastion:patrol", "bastion:fight", "bastion:hold"]) {
+      it(`${name} (${mode}): quien aguanta solo va a por quien tiene a ${HOLD_ENGAGE} bloques`, () => {
+        const types = entity.component_groups[mode]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types;
+        const held = types.filter(holds);
+        const free = types.filter((t: { filters: unknown }) => !holds(t));
+        expect(held.length).toBeGreaterThan(0);
+        expect(free.length).toBe(held.length);
+        for (const t of held) expect(t.max_dist).toBeLessThanOrEqual(HOLD_ENGAGE);
+        expect(Math.max(...free.map((t: { max_dist: number }) => t.max_dist))).toBeGreaterThan(HOLD_ENGAGE);
+      });
+    }
+
+    it(`${name}: aguantando, no sale tras quien le dispara de lejos`, () => {
+      const types = entity.component_groups["bastion:hold"]["minecraft:behavior.hurt_by_target"].entity_types;
+      const held = types.filter(holds);
+      expect(held).toHaveLength(1);
+      expect(held[0].max_dist).toBeLessThanOrEqual(8);
+    });
+  }
+});
+
+describe("órdenes a los aliados", () => {
+  const orders = ["bastion:patrol", "bastion:fight", "bastion:returning", "bastion:hold", "bastion:retreat", "bastion:sortie"];
+
+  for (const { id: name, role } of UNIT_LIST.filter((u) => u.side === "ally")) {
+    const entity = readEntity(name);
+    // Solo quien pelea cuerpo a cuerpo puede ser escolta del cuerno.
+    const groups = role === "melee" ? [...orders, ALLY_ESCORT_EVENT, ALLY_GUARD_EVENT] : orders;
+
     it(`${name}: cada orden deja activo un solo modo`, () => {
+      expect(Object.keys(entity.component_groups).filter((g) => !g.startsWith("bastion:skin_")).sort()).toEqual([...groups].sort());
       for (const group of groups) {
         const event = entity.events[group === "bastion:returning" ? "bastion:return" : group];
         expect(event.add.component_groups).toEqual([group]);
@@ -189,7 +264,12 @@ describe("órdenes a los aliados", () => {
       const types = entity.component_groups["bastion:retreat"]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types;
       const [foes, ...rest] = types;
       const posts = rest.slice(0, MAX_POSTS);
-      const rally = rest[MAX_POSTS];
+      // Repliegue por la moral: a la torre, tan urgente como un puesto, antes que el patio.
+      const keep = rest[MAX_POSTS];
+      const rally = rest[MAX_POSTS + 1];
+      expect(JSON.stringify(keep)).toContain(KEEP_TAG);
+      expect(JSON.stringify(keep)).toContain(TO_KEEP_TAG);
+      expect(keep.priority).toBeLessThan(rally.priority);
       expect(JSON.stringify(foes)).toContain(FAMILY.invader);
       expect(foes.max_dist).toBeLessThanOrEqual(6);
       posts.forEach((post: { priority: number }, i: number) => {
@@ -204,8 +284,8 @@ describe("órdenes a los aliados", () => {
 
     it(`${name}: al salir va a por los invasores sin límite de distancia`, () => {
       const hunt = entity.component_groups["bastion:sortie"]["minecraft:behavior.nearest_prioritized_attackable_target"];
-      expect(hunt.entity_types[0].max_dist).toBeGreaterThanOrEqual(200);
-      expect(JSON.stringify(hunt.entity_types[0])).toContain(FAMILY.invader);
+      const invaders = hunt.entity_types.find((t: object) => JSON.stringify(t).includes(FAMILY.invader));
+      expect(invaders.max_dist).toBeGreaterThanOrEqual(200);
     });
 
     it(`${name}: al salir no se queda atado a su puesto y va a por los invasores cercanos`, () => {
@@ -236,7 +316,10 @@ describe("ritmo de combate", () => {
       .find(Boolean);
     // El golpe es el de la ficha: el generador descuenta del daño base lo que suma el arma.
     if (!isUnitId(attackerName)) throw new Error(attackerName);
-    return Math.ceil(defender.components["minecraft:health"].value / UNITS[attackerName].damage) * (melee?.cooldown_time ?? 1);
+    // Con la vida media: cada unidad nace con un ±10 % (ver `VARIATION` en el generador).
+    const health = defender.components["minecraft:health"].value;
+    const average = typeof health === "number" ? health : (health.range_min + health.range_max) / 2;
+    return Math.ceil(average / UNITS[attackerName].damage) * (melee?.cooldown_time ?? 1);
   };
 
   // Limbers eligió el daño completo de las armas (2026-11-06): duelos de 6 a 10,5 s.
@@ -321,6 +404,22 @@ describe("coste de elegir enemigo en batallas grandes", () => {
           if (n[k]) {
             found++;
             expect(n[k].scan_interval).toBe(40);
+          }
+      });
+      expect(found).toBeGreaterThan(0);
+    });
+
+    // `reselect_targets` hunde la batalla de 400 unidades a 2-4 ticks/s (sin él, 19-20), pero sin él quien tiene
+    // objetivo no lo suelta al cambiarle las etiquetas y los invasores se quedaban en el primer hito de Stonehill.
+    // Se queda puesto mientras se decide la migración a Java (v0.1.55, docs/IA.md, «Coste en batallas grandes, otra vez»).
+    it(`${name}: revisa su objetivo en cada tick (reselect_targets), para seguir rutas, grupos y rastros`, () => {
+      let found = 0;
+      each(entity, (n) => {
+        for (const k of TARGETERS)
+          if (n[k]) {
+            found++;
+            expect(n[k].reselect_targets).toBe(RESELECT_TARGETS);
+            expect(RESELECT_TARGETS).toBe(true);
           }
       });
       expect(found).toBeGreaterThan(0);

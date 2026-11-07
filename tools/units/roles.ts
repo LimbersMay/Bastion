@@ -2,11 +2,15 @@
  * Roles: cómo pelea cada unidad según su bando. Cada uno da sus componentes propios y sus modos (grupos de
  * componentes entre los que la unidad cambia con eventos). El primer modo es el de aparición.
  */
-import { FAMILY } from "../../scripts/constants";
+import { ALLY_ESCORT_EVENT, ALLY_GUARD_EVENT, FAMILY } from "../../scripts/constants";
 import type { Role, Side, UnitDef } from "../../scripts/units/catalog";
 import {
   allyTarget,
+  escortTargeting,
   foe,
+  GUARD_RANGE,
+  holdingAllyTarget,
+  holdingHurtByTarget,
   foeOnLand,
   invaderOnLand,
   home,
@@ -63,18 +67,19 @@ function allyModes(own: { patrol: Json; fight: Json; hold: Json; sortie: Json })
 
 /**
  * Soldado aliado: se defiende de lo que tiene cerca y puede alcanzar, sin alejarse de su puesto; antes los
- * invasores que los monstruos (`allyTarget`).
+ * invasores que los monstruos (`allyTarget`). Solo él puede ser escolta del cuerno.
  */
 const allyMelee: RoleBuilder = () => {
   const core = {
     "minecraft:behavior.melee_attack": melee(),
-    "minecraft:behavior.hurt_by_target": hurtByTarget("ally"),
+    "minecraft:behavior.hurt_by_target": holdingHurtByTarget(),
   };
+  // Si tiene delante el doble de enemigos, aguanta: solo va a por quien se le acerca (`scripts/systems/stance.ts`).
   const fightCore = (maxDist: number) => ({
     ...core,
-    "minecraft:behavior.nearest_prioritized_attackable_target": allyTarget({ priority: 3, maxDist, mustReach: true }),
+    "minecraft:behavior.nearest_prioritized_attackable_target": holdingAllyTarget({ priority: 3, maxDist, mustReach: true }),
   });
-  return {
+  const base: Behavior = {
     components: {},
     modes: allyModes({
       patrol: {
@@ -86,10 +91,19 @@ const allyMelee: RoleBuilder = () => {
       hold: { "minecraft:behavior.random_stroll": stroll({ speed: 0.6, xz: 4, y: 3, interval: 120 }), ...fightCore(16) },
       sortie: {
         ...core,
-        "minecraft:behavior.nearest_attackable_target": nearestTarget({ priority: 3, filters: invaderOnLand, maxDist: 24, mustReach: true }),
-        "minecraft:behavior.nearest_prioritized_attackable_target": sortieHunt(true),
+        "minecraft:behavior.nearest_attackable_target": nearestTarget({ priority: 3, filters: invaderOnLand, maxDist: 24, mustReach: true, squads: true }),
+        "minecraft:behavior.nearest_prioritized_attackable_target": sortieHunt(true, true),
       },
     }),
+  };
+  return {
+    components: base.components,
+    modes: {
+      ...base.modes,
+      // Escolta del cuerno (`scripts/systems/rescue.ts`): de camino hacia su jugador y, a su lado, vigilando.
+      [ALLY_ESCORT_EVENT]: { ...core, "minecraft:behavior.nearest_prioritized_attackable_target": escortTargeting() },
+      [ALLY_GUARD_EVENT]: { ...fightCore(GUARD_RANGE), "minecraft:behavior.random_stroll": stroll({ speed: 0.6, xz: 3, y: 2, interval: 80 }) },
+    },
   };
 };
 
@@ -170,7 +184,7 @@ const invaderMelee: RoleBuilder = () => ({
   components: { "minecraft:behavior.melee_attack": melee(), ...invaderBase },
   modes: {
     "bastion:march": {
-      "minecraft:behavior.nearest_attackable_target": nearestTarget({ priority: 2, filters: foeOnLand("invader"), maxDist: 24, mustReach: true }),
+      "minecraft:behavior.nearest_attackable_target": nearestTarget({ priority: 2, filters: foeOnLand("invader"), maxDist: 24, mustReach: true, squads: true }),
       "minecraft:behavior.nearest_prioritized_attackable_target": huntTargeting(),
     },
     [RETURNING]: { "minecraft:behavior.nearest_prioritized_attackable_target": returnTargeting("invader") },

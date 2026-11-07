@@ -46,6 +46,35 @@ export function baseDamage(unit: UnitDef): number {
   return unit.damage - bonus;
 }
 
+/**
+ * Variación entre unidades del mismo tipo (elegida por Limbers, 2026-11-06): cada una nace con un ±10 % de
+ * vida y cada golpe varía otro ±10 %. Así dos unidades iguales no tienen el duelo decidido de antemano
+ * (ver «Peleas» en `docs/IA.md`), y la media sigue siendo la de la ficha.
+ */
+export const VARIATION = 0.1;
+
+/** Rango del juego (`range_min`, `range_max`), como la vida del caballo o el golpe del gólem de hierro. */
+export interface Range {
+  readonly range_min: number;
+  readonly range_max: number;
+}
+
+/** Margen entero de la variación: un 10 % redondeado. Las cifras pequeñas (un golpe de 2) quedan fijas. */
+export const variationOf = (value: number) => Math.round(value * VARIATION);
+
+/** `value` ± su variación, o `value` tal cual si no varía. `offset` se resta a los dos extremos. */
+export function varied(value: number, offset = 0): number | Range {
+  const spread = variationOf(value);
+  if (spread === 0) return value - offset;
+  return { range_min: value - spread - offset, range_max: value + spread - offset };
+}
+
+/** Vida al nacer. Sin `max`: el juego toma como máximo lo que sale, y el descanso cura hasta ahí. */
+export const healthComponent = (unit: UnitDef): Json => ({ value: varied(unit.health) });
+
+/** Golpe de la entidad: el de la ficha ± su variación, menos lo que suma el arma. */
+export const attackDamage = (unit: UnitDef) => varied(unit.damage, unit.damage - baseDamage(unit));
+
 /** Grupo que fija la skin `index` de la unidad (`minecraft:variant`, que lee su render controller). */
 export const skinGroup = (index: number) => `bastion:skin_${index}`;
 
@@ -83,13 +112,13 @@ export function behaviorEntity(unit: UnitDef): Json {
       components: {
         "minecraft:type_family": { family: unit.side === "ally" ? [FAMILY.ally, UNIT_FAMILY, MONSTER_PREY_FAMILY] : [FAMILY.invader, UNIT_FAMILY] },
         "minecraft:collision_box": { width: 0.6, height: 1.9 },
-        "minecraft:health": { value: unit.health, max: unit.health },
+        "minecraft:health": healthComponent(unit),
         "minecraft:movement": { value: unit.speed },
         "minecraft:annotation.open_door": {},
         "minecraft:jump.static": {},
         "minecraft:can_climb": {},
         "minecraft:follow_range": { value: 100, max: 100 },
-        "minecraft:attack": { damage: baseDamage(unit) },
+        "minecraft:attack": { damage: attackDamage(unit) },
         ...(unit.knockbackResistance === undefined ? {} : { "minecraft:knockback_resistance": { value: unit.knockbackResistance } }),
         ...(unit.projectile ? { "minecraft:shooter": { def: unit.projectile } } : {}),
         ...(unit.weapon ? { "minecraft:equipment": equipment(unit) } : {}),

@@ -141,6 +141,12 @@ export interface MapDef {
   readonly rallyPoints?: readonly Vec3[];
 
   /**
+   * La torre: el último reducto. Un grupo de aliados superado en el patio se repliega aquí (moral, Fase 3). Debe
+   * poder alcanzarse a pie desde el patio y caber unos cuantos. Sin ella, el repliegue acaba en el patio.
+   */
+  readonly keep?: Vec3;
+
+  /**
    * Puestos de defensa (máximo 12): con la orden de retirada cada aliado ocupa uno y lo defiende. `front` corta
    * el paso de los invasores, `side` lo cubre desde un costado y `high` es para los que disparan. Deben poder
    * alcanzarse a pie desde el patio.

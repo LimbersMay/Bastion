@@ -1,5 +1,5 @@
 import { ItemStack, type Player } from "@minecraft/server";
-import { MENU_ITEM_ID, RETREAT_ITEM_ID, SORTIE_ITEM_ID } from "../constants";
+import { HORN_ITEM_ID, MENU_ITEM_ID, MODE_ITEM_ID, RETREAT_ITEM_ID, SORTIE_ITEM_ID } from "../constants";
 import { S } from "../strings";
 
 /** Equipo inicial: no hay crafteo ni supervivencia, así que todo se entrega al empezar. */
@@ -12,6 +12,8 @@ const LOADOUT: ReadonlyArray<{ id: string; amount: number; name?: string; lore?:
   { id: MENU_ITEM_ID, amount: 1 },
   { id: RETREAT_ITEM_ID, amount: 1, name: S.retreatItemName, lore: S.retreatItemLore, keep: true },
   { id: SORTIE_ITEM_ID, amount: 1, name: S.sortieItemName, lore: S.sortieItemLore, keep: true },
+  { id: HORN_ITEM_ID, amount: 1, name: S.hornItemName, lore: S.hornItemLore, keep: true },
+  { id: MODE_ITEM_ID, amount: 1, name: S.modeItemName, lore: S.modeItemLore, keep: true },
 ];
 
 export function giveLoadout(player: Player): void {
@@ -31,19 +33,24 @@ export function giveLoadout(player: Player): void {
   }
 }
 
-/** `true` si el jugador ya lleva el reloj del menú. */
-export function hasMenuItem(player: Player): boolean {
-  const container = player.getComponent("minecraft:inventory")?.container;
-  if (!container) return true;
-  for (let i = 0; i < container.size; i++) {
-    if (container.getItem(i)?.typeId === MENU_ITEM_ID) return true;
-  }
-  return false;
-}
-
-/** Entrega solo el reloj del menú, para quien no lo tenga. */
-export function giveMenuItem(player: Player): void {
+/**
+ * Al entrar, quien no lleve el reloj del menú o la brújula de modo los recibe: sin ellos no podría abrir el menú ni
+ * salir del modo espectador (el servidor de pruebas arranca con él) sin escribir comandos ni ser operador.
+ */
+export function giveEssentials(player: Player): void {
   const container = player.getComponent("minecraft:inventory")?.container;
   if (!container) return;
-  container.addItem(new ItemStack(MENU_ITEM_ID, 1));
+  const carried = new Set<string>();
+  for (let i = 0; i < container.size; i++) {
+    const id = container.getItem(i)?.typeId;
+    if (id) carried.add(id);
+  }
+  for (const item of LOADOUT.filter((i) => i.id === MENU_ITEM_ID || i.id === MODE_ITEM_ID)) {
+    if (carried.has(item.id)) continue;
+    const stack = new ItemStack(item.id, item.amount);
+    if (item.name) stack.nameTag = item.name;
+    if (item.lore) stack.setLore([item.lore]);
+    if (item.keep) stack.keepOnDeath = true;
+    container.addItem(stack);
+  }
 }

@@ -1,7 +1,8 @@
 import type { BlockPermutation, Dimension, Entity } from "@minecraft/server";
-import { FAMILY } from "../constants";
+import { FAMILY, SQUAD_WAIT_TAG } from "../constants";
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
 import { Hunts } from "./hunt";
+import type { RouteJobs } from "./routeJobs";
 import { digPlan, FIGHT_DISTANCE, GATE_WALL_HITS, hitsToBreak, inFightRange, isUnbreakable, nearBox } from "./digLogic";
 import { entityIdsWhere } from "../units/catalog";
 import { isReturning } from "./returnPath";
@@ -37,13 +38,18 @@ export class Sappers {
   /** `true` la primera vez que se derriba algo en la partida, para avisar una sola vez. */
   breachedSomewhere = false;
   private brokenNow = 0;
-  private readonly hunts: Hunts | undefined;
+  /**
+   * La caza. Solo se abren camino por su cuenta en los mapas con zona de asedio; en todos, el director de
+   * inalcanzables abre rastros con ella (grupos guiados y bajadas).
+   */
+  readonly hunts: Hunts;
 
   constructor(
     private readonly dimension: Dimension,
-    private readonly map: MapDef
+    private readonly map: MapDef,
+    jobs: RouteJobs
   ) {
-    this.hunts = map.siege && new Hunts(dimension, map.siege, (at) => this.isProtected(at), (at) => this.strike(at));
+    this.hunts = new Hunts(dimension, jobs, (at) => this.strike(at), map.siege !== undefined);
   }
 
   /** Revisión periódica. Devuelve los bloques derribados en este pulso. */
@@ -55,7 +61,8 @@ export class Sappers {
     const stalled: Entity[] = [];
 
     for (const unit of soldiers) {
-      if (!unit.isValid || isReturning(unit) || unit.isInWater) continue;
+      // La reserva de un grupo espera quieta a propósito: no está atascada.
+      if (!unit.isValid || isReturning(unit) || unit.isInWater || unit.hasTag(SQUAD_WAIT_TAG)) continue;
       const entry = this.track(unit);
       seen.set(unit.id, entry);
       if (entry.still < STALL_SECONDS || budget <= 0 || this.isFighting(unit)) continue;
@@ -70,7 +77,7 @@ export class Sappers {
       if (result === "broken") this.brokenNow++;
     }
     this.watched = seen;
-    this.hunts?.tick(stalled, soldiers);
+    this.hunts.tick(stalled, soldiers);
     return this.brokenNow;
   }
 
@@ -102,7 +109,8 @@ export class Sappers {
     return hit !== undefined;
   }
 
-  private isProtected(at: Vec3): boolean {
+  /** Muros de puerta y lo que los protege: ni la caza ni nadie los rompe por su cuenta. */
+  isProtected(at: Vec3): boolean {
     return this.map.gates.some((g) => g.walls.some((w) => inBox(at, w)) || (g.blockers ?? []).some((b) => inBox(at, b)));
   }
 
@@ -168,7 +176,7 @@ export class Sappers {
     this.hits.clear();
     this.watched.clear();
     this.breachedSomewhere = false;
-    this.hunts?.clear();
+    this.hunts.clear();
     return restored;
   }
 }

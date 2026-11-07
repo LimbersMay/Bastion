@@ -119,6 +119,11 @@ export const stonehillCastle: MapDef = {
     { x: -314.5, y: 129, z: 214.5 },
   ],
 
+  // La torre del homenaje: la sala grande al norte del patio (x -330..-316, z 184..192, suelo a y 127), con la
+  // puerta al patio en x -318, z 193. Desde el patio se llega a pie en 29 pasos (`tools/shores.mjs route`, sobre el
+  // terreno real). El marcador va en el centro de la sala.
+  keep: { x: -325.5, y: 128, z: 188.5 },
+
   sortiePoint: { x: -288.5, y: 125, z: 207.5 },
 
   reinforcements: {

@@ -1,9 +1,9 @@
 import { Player, system, world } from "@minecraft/server";
-import { ENTITY_IDS, MENU_ITEM_ID, NAMESPACE, PROP_ACTIVE_MAP, PROP_SPECTATE, RETREAT_ITEM_ID, SORTIE_ITEM_ID } from "./constants";
+import { ENTITY_IDS, HORN_ITEM_ID, MENU_ITEM_ID, MODE_ITEM_ID, NAMESPACE, PROP_ACTIVE_MAP, PROP_SPECTATE, RETREAT_ITEM_ID, SORTIE_ITEM_ID } from "./constants";
 import { SiegeManager } from "./game/siegeManager";
 import { defaultMap, findMap, MAPS } from "./maps";
 import { validateMap } from "./maps/validate";
-import { giveMenuItem, hasMenuItem } from "./systems/loadout";
+import { giveEssentials } from "./systems/loadout";
 import { S } from "./strings";
 import { openMainMenu } from "./ui/menus";
 import { unitOf, UNIT_LIST } from "./units/catalog";
@@ -82,12 +82,13 @@ function handleScriptEvent(id: string, message: string, source: Player | undefin
       else source?.sendMessage(S.scriptHelp);
       break;
     }
-    case "spectate": {
+    case "spectate":
+      setSpectate(manager, message.trim() !== "off");
+      break;
+    case "squads": {
       const on = message.trim() !== "off";
-      world.setDynamicProperty(PROP_SPECTATE, on);
-      manager.refreshGameModes();
-      console.log(`[bastion] Modo espectador ${on ? "activado" : "desactivado"}.`);
-      world.sendMessage(on ? S.spectateOn : S.spectateOff);
+      manager.setSquads(on);
+      console.log(`[bastion] Director de grupos y moral ${on ? "activados" : "desactivados"}.`);
       break;
     }
     case "pos":
@@ -110,7 +111,7 @@ world.afterEvents.playerSpawn.subscribe((ev) => {
   if (!ev.initialSpawn) return;
   const m = ensureManager(ev.player);
   if (m) ev.player.sendMessage(S.loaded(m.currentMap.name));
-  if (!hasMenuItem(ev.player)) giveMenuItem(ev.player);
+  giveEssentials(ev.player);
   m?.onPlayerJoined(ev.player);
 });
 
@@ -120,14 +121,26 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
   handleScriptEvent(ev.id, ev.message, source);
 });
 
-// El reloj del equipo inicial abre el menú; la pluma y la vara dan órdenes a los aliados.
+/** Modo espectador: el asedio deja a los jugadores en creativo (mirar) o en supervivencia (jugar). */
+function setSpectate(manager: SiegeManager, on: boolean): void {
+  world.setDynamicProperty(PROP_SPECTATE, on);
+  manager.refreshGameModes();
+  console.log(`[bastion] Modo espectador ${on ? "activado" : "desactivado"}.`);
+  world.sendMessage(on ? S.spectateOn : S.spectateOff);
+}
+
+// El reloj del equipo inicial abre el menú; la pluma y la vara dan órdenes a los aliados; el cuerno pide rescate;
+// la brújula cambia entre jugar y mirar (sin escribir comandos ni ser operador).
+const ITEMS = new Set([MENU_ITEM_ID, RETREAT_ITEM_ID, SORTIE_ITEM_ID, HORN_ITEM_ID, MODE_ITEM_ID]);
 world.afterEvents.itemUse.subscribe((ev) => {
   const { typeId } = ev.itemStack;
-  if (typeId !== MENU_ITEM_ID && typeId !== RETREAT_ITEM_ID && typeId !== SORTIE_ITEM_ID) return;
+  if (!ITEMS.has(typeId)) return;
   const player = ev.source;
   const m = ensureManager(player);
   if (!m) return;
   if (typeId === MENU_ITEM_ID) void openMainMenu(player, m, (mapId) => changeMap(mapId, player));
+  else if (typeId === HORN_ITEM_ID) m.blowHorn(player);
+  else if (typeId === MODE_ITEM_ID) setSpectate(m, world.getDynamicProperty(PROP_SPECTATE) !== true);
   else m.orderAllies(typeId === RETREAT_ITEM_ID ? "retreat" : "sortie", player);
 });
 

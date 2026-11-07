@@ -2,7 +2,7 @@
 
 Addon de **invasión y defensa** para Minecraft Bedrock. Un castillo, fortaleza o villa amurallada es asediado por oleadas de enemigos. Combates en primera persona junto a aliados con IA. No hay crafteo ni supervivencia: el equipo se entrega al empezar.
 
-Estado: **v0.1.43 (Fase 2: fichas de unidad, armas en la mano, puestos de defensa, balsas, skins variadas, guerreros y arqueros, monstruos del juego como enemigos y el mapa Stonehill Castle), probado en el servidor oficial (BDS)**; mapas: The Combat Castle, Old Fallen Castle y Stonehill Castle (ver «Qué falta»).
+Estado: **v0.1.51 (Fase 2: fichas de unidad, armas en la mano, puestos de defensa, balsas, skins variadas, guerreros y arqueros, monstruos del juego como enemigos y el mapa Stonehill Castle; Fase 3 en curso: variación de vida y golpe entre unidades, grupos, moral, salidas a las peleas estancadas y cuerno de rescate y escolta, postura defensiva), probado en el servidor oficial (BDS)**; mapas: The Combat Castle, Old Fallen Castle y Stonehill Castle (ver «Qué falta»).
 
 ## Retomar el trabajo
 
@@ -53,7 +53,7 @@ npm run units        # genera los archivos de las unidades a partir de sus ficha
 | `/scriptevent bastion:reset` | Reinicia: borra unidades y vuelve a levantar los muros |
 | `/scriptevent bastion:pos` | Te dice tus coordenadas, listas para pegar en un mapa |
 | `/scriptevent bastion:map <id>` | Cambia el mapa activo (se guarda en el mundo) |
-| `/scriptevent bastion:spectate on` / `off` | Modo espectador: el asedio te deja en creativo para mirar, en vez de en supervivencia (se guarda en el mundo) |
+| `/scriptevent bastion:spectate on` / `off` | Modo espectador: el asedio te deja en creativo para mirar, en vez de en supervivencia (se guarda en el mundo). La brújula del equipo hace lo mismo sin comandos |
 
 ## Añadir un mapa (un mundo por mapa)
 
@@ -70,7 +70,8 @@ No hace falta medir nada dentro del juego: las coordenadas se sacan leyendo el m
    - `invaderSpawns`: **fuera**, a menos de ~70 bloques de la puerta (el alcance de la IA de los invasores es 80).
    - `breachSpawns`: dentro, para las tropas de la brecha.
    - `defensePosts` (opcional, hasta 12): puestos que ocupan los aliados con la orden de retirada. `kind` es `front` (cortar el paso, cuerpo a cuerpo), `side` (cubrir, cualquiera) o `high` (en alto, quien dispara); `capacity` cambia las plazas (por defecto 3, 2 y 2). Ponlos en suelo al que se llegue a pie desde el patio.
-   - `rallyPoints`: el patio, donde espera quien no encuentra puesto libre.
+   - `rallyPoints`: el patio, donde espera quien no encuentra puesto libre y adonde se repliega un grupo superado.
+   - `keep` (opcional): la torre, el último sitio al que se repliega un grupo superado que ya estaba en el patio. Sin ella, el patio es el último reducto.
    - `retiredWalls` (opcional): muros de versiones anteriores del mapa, que siguen en los mundos ya jugados; se quitan al empezar (solo los bloques de su material). Para los bloqueos invisibles, `block: "barrier"`.
    - `returnRoutes` (opcional, hasta 4): orillas de salida y sus hitos para quien cae al agua (ver `tools/shores.mjs` abajo).
    - `waves`: oleadas (qué unidades, cuántas, tandas e intervalo en ticks; 20 ticks = 1 s).
@@ -106,7 +107,7 @@ npm run mcaddon && node tools/bds.mjs sync       # tras cada build: instala los 
 node tools/bds.mjs run "wait 3" "scriptevent bastion:start" "wait 25" "testfor @e[type=bastion:invader_wizard]" "kill @e[type=bastion:invader_wizard]" "wait 5" "testfor @e[type=bastion:invader_soldier]"
 ```
 
-Para probar con la tablet en la misma Wi-Fi: `node tools/bds.mjs serve` deja el servidor encendido (puerto 19132, solo red local; no lo expongas a Internet). Las órdenes se escriben en `<BDS_DIR>/../cmd.txt` (`stop` lo apaga) y hay que hacerse operador (`op <nombre>`) para usar `/scriptevent`. `serve` activa el modo espectador al arrancar: quien entra a mirar se queda en creativo (`scriptevent bastion:spectate off` para jugar).
+Para probar con la tablet en la misma Wi-Fi: `node tools/bds.mjs serve` deja el servidor encendido (puerto 19132, solo red local; no lo expongas a Internet). Las órdenes se escriben en `<BDS_DIR>/../cmd.txt` (`stop` lo apaga) y hay que hacerse operador (`op <nombre>`) para usar `/scriptevent`. `serve` activa el modo espectador al arrancar: quien entra a mirar se queda en creativo (`scriptevent bastion:spectate off` para jugar). Para subir cambios de código y seguir la partida en directo sin apagar el servidor, ver [tools/lab/README.md](tools/lab/README.md), «Pruebas en vivo, sin reiniciar el servidor».
 
 `run` arranca el servidor, ejecuta los pasos (`wait N` espera N segundos; lo demás son comandos de consola) y lo apaga. El log queda en `<BDS_DIR>/../last-run.log`; las líneas `[Scripting]` son las del addon. Cada cambio de fase de la partida (`fase wave#1 -> intermission#1 ...`) queda registrado ahí, así se sigue una partida entera sin jugador. Las entidades persisten en el mundo de pruebas: repite `setup` para empezar de cero. No sirve para ver modelos, texturas ni animaciones.
 
@@ -154,7 +155,7 @@ Cada unidad es una **ficha** en `scripts/units/catalog.ts`: bando, rol, vida, da
 2. Pon sus skins 64x64 (brazos anchos) en `resource_packs/bastion/textures/entity/<skin>.png` y anota en `docs/SKINS.md` de dónde sale cada una. Al aparecer, la unidad toma una al azar (`minecraft:variant`).
 3. `npm run units` (también lo hace `npm run build`). `npm test` avisa si los archivos quedaron viejos.
 
-El **bando** decide a quién ataca, de qué daño se libra y qué órdenes obedece. El **rol** decide cómo pelea: cuerpo a cuerpo (`melee`), proyectiles mágicos (`caster`) o flechas (`archer`, con `ranged` en la ficha: ritmo y alcance; el daño de la flecha está en su entidad, `ally_arrow.json` o `invader_arrow.json`). Cada combinación está en `tools/units/roles.ts`. Lo común a todas (regreso a pie, peleas en el agua, cada cuánto buscan enemigo) está una sola vez en `tools/units/behavior.ts`.
+El **bando** decide a quién ataca, de qué daño se libra y qué órdenes obedece. El **rol** decide cómo pelea: cuerpo a cuerpo (`melee`), proyectiles mágicos (`caster`) o flechas (`archer`, con `ranged` en la ficha: ritmo y alcance; el daño de la flecha está en su entidad, `ally_arrow.json` o `invader_arrow.json`). Cada combinación está en `tools/units/roles.ts`. La vida y el golpe de la ficha son la media: cada unidad nace con un ±10 % de vida y cada golpe varía otro ±10 % (`VARIATION` en `tools/units/generate.ts`), para que dos unidades iguales no tengan el duelo decidido de antemano. Lo común a todas (regreso a pie, peleas en el agua, cada cuánto buscan enemigo) está una sola vez en `tools/units/behavior.ts`.
 
 ## Órdenes a los aliados
 
@@ -164,6 +165,26 @@ El equipo inicial trae dos objetos. Se usan como el reloj y funcionan durante el
 - **Vara de blaze, «Orden: al ataque»:** salen a por el invasor vivo más cercano, esté donde esté. Es solo contra los invasores: cuando muere el último (y no queda ninguno por salir), vuelven solos al castillo, a los puestos de defensa (o a los suyos, si el mapa no tiene).
 
 Con comandos: `/scriptevent bastion:order retreat` o `sortie`. Para pruebas a gran escala, `/scriptevent bastion:reserve <mínimo> <reserva> <tanda>` cambia los refuerzos de la partida en curso.
+
+## Combate en grupos (Fase 3)
+
+Durante las oleadas, un director (`scripts/systems/squads.ts`) organiza a quienes pelean cuerpo a cuerpo:
+
+- **Grupos:** cada bando se junta en grupos de hasta 8 por cercanía, y cada grupo persigue a un enemigo distinto, separado de los de los demás grupos. Los jugadores, arqueros y pirómanos cuentan como objetivo, pero no se agrupan.
+- **Reserva:** avanzan como mucho 1,5 grupos por cada grupo enemigo; el resto espera, como mucho 30 s. Así no choca todo a la vez en una sola bola.
+- **Moral** (`morale.ts`): un grupo aliado superado (menos de la mitad que los invasores a su alrededor) y castigado (menos del 60 % de los que era) se repliega al patio y, si ya estaba allí, a la torre (`keep`). En el descanso, los que siguen vivos vuelven a su sitio.
+- **Peleas estancadas:**
+  - Un grupo que pasa 15 s sin acercarse a su objetivo ni pelear lo deja y no lo vuelve a elegir.
+  - **Inalcanzables** (`unreachable.ts`, de cualquier bando): cuando un grupo deja a su objetivo, el director busca una ruta a pie hasta él y guía al grupo por ella. Los invasores rompen lo que estorba dentro de la zona de asedio; los aliados solo caminan, y solo con la orden de ataque, que es cuando persiguen. Si no hay ruta o el grupo no avanza por ella, el invasor vuelve a la ruta de subida desde el hito más cercano. Si nadie llega hasta el objetivo y la pelea lleva 20 s sin bajas, el inalcanzable baja a pelear: el aliado al patio y el invasor a la ruta de subida. Un jugador nunca se mueve.
+  - Si solo quedan tiradores aliados y pasan 20 s sin bajas, bajan al patio a resistir (último reducto).
+  - **Escaleras de mano** (`ladders.ts`, v0.1.53): las rutas del director pueden llevar escaleras, de hasta 24 bloques, para bajar donde la caída es demasiado alta o para subir una pared de 2 o más. Se ponen en casillas libres, apoyadas en un bloque macizo, y se encadenan en terreno irregular (escalera hasta un saliente, unos pasos, otra escalera). Las criaturas no las usan solas: al llegar a su pie o a su borde, el director las mete en ella y las sube o las baja a la velocidad de trepar. Los invasores también ponen escaleras por fuera de la muralla, como asalto. Se quitan al reiniciar, y se repone lo que había.
+  - Quien baja (por el último reducto o por ser inalcanzable) busca ruta a su destino, con escaleras si hace falta. Si ni así la hay y en 10 s no se acerca, se le lleva con una nube de humo.
+  - Red de seguridad: tras 45 s sin bajas, sin bloques de muro rotos y sin brechas, los invasores que no se han movido de su sitio abandonan el asedio, para que la oleada termine. Pasados 90 s, estar junto a un enemigo sin poder golpearlo ya no les salva.
+
+- **Cuerno de rescate y escolta** (`rescue.ts`): si un jugador en supervivencia tiene 3 o más invasores a 5 bloques, suena un cuerno y acuden 6 aliados cuerpo a cuerpo (a 40 bloques como mucho) hacia él; vuelven a su orden cuando queda libre o a los 30 s, y como mucho hay un cuerno cada 30 s por jugador. Además, el jugador lleva un **cuerno de cabra** en el equipo: al tocarlo llega una **escolta de 4** que le sigue y le guarda las espaldas hasta el fin de la oleada, sin obedecer las órdenes generales. Tocarlo otra vez (una vez por minuto) la completa; agachado, la despide. En los dos casos acuden primero la reserva del director y los que no están peleando; nunca se saca a nadie de una pelea.
+- **Postura defensiva** (`stance.ts`, `stanceLogic.ts`): con la orden de defender, los aliados aguantan y dejan que el atacante venga a ellos. Los refuerzos corren a un puesto de defensa libre (o al patio) en vez de salir a atacar; quien cuerpo a cuerpo pasa al otro lado de una puerta vuelve a un puesto; y quien tiene delante el doble de invasores que aliados a su lado aguanta en su sitio: solo pelea con quien se le acerca a 5 bloques y no persigue a quien le dispara de lejos, hasta que la pelea se iguala. Con la orden de ataque nada de esto aplica.
+
+`/scriptevent bastion:squads off` lo apaga para comparar (`on` lo vuelve a encender).
 
 ## Qué falta (decisiones y trabajo pendiente)
 

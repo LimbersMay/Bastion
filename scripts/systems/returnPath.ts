@@ -126,10 +126,10 @@ function rescueStranded(dimension: Dimension, entity: Entity, routes: readonly (
   return true;
 }
 
-function followRoute(entity: Entity, route: number): void {
+function followRoute(entity: Entity, route: number, stage = 0): void {
   entity.addTag(RETURNING_TAG);
   entity.addTag(returnRouteTag(route));
-  entity.addTag(returnStageTag(0));
+  entity.addTag(returnStageTag(stage));
   entity.triggerEvent(RETURN_EVENT);
 }
 
@@ -140,12 +140,19 @@ function startReturn(entity: Entity, routes: readonly (readonly Vec3[])[]): void
   console.log(`[bastion] ${entity.typeId} cayó al agua en ${at.x.toFixed(0)},${at.y.toFixed(0)},${at.z.toFixed(0)}: regresa por la ruta ${route}.`);
 }
 
-/** Un invasor recién llegado empieza la subida por la ruta más cercana. `false` si el mapa no tiene rutas de subida. */
-export function startApproach(entity: Entity, map: MapDef): boolean {
+/**
+ * Un invasor recién llegado empieza la subida por la ruta más cercana. `false` si el mapa no tiene rutas de subida.
+ * `fromNearest`: empieza por el hito más cercano y no por el primero (quien ya está a media subida y se perdió).
+ */
+export function startApproach(entity: Entity, map: MapDef, fromNearest = false): boolean {
   const approach = map.approachRoutes ?? [];
   if (approach.length === 0) return false;
   try {
-    followRoute(entity, (map.returnRoutes?.length ?? 0) + nearestRoute(entity.location, approach));
+    const route = nearestRoute(entity.location, approach);
+    const at = entity.location;
+    const stages = approach[route];
+    const stage = fromNearest ? stages.reduce((best, p, i) => (distanceSq(p, at) < distanceSq(stages[best], at) ? i : best), 0) : 0;
+    followRoute(entity, (map.returnRoutes?.length ?? 0) + route, stage);
     return true;
   } catch (e) {
     console.warn(`[bastion] No se pudo poner en la ruta de subida a ${entity.typeId}: ${e}`);

@@ -73,6 +73,7 @@ export function validateMap(map: MapDef): string[] {
     checkVec("siege.zone.to", map.siege.zone.to);
   }
   map.rallyPoints?.forEach((v, i) => checkVec(`rallyPoints[${i}]`, v));
+  if (map.keep) checkVec("keep", map.keep);
   if (map.sortiePoint) checkVec("sortiePoint", map.sortiePoint);
   if ((map.defensePosts?.length ?? 0) > MAX_POSTS) err(`defensePosts: máximo ${MAX_POSTS} puestos.`);
   map.defensePosts?.forEach((post, i) => {

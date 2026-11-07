@@ -18,6 +18,16 @@ export interface RouteCell {
   readonly climb?: boolean;
   /** No se puede subir a él de un salto, como una valla. */
   readonly noStep?: boolean;
+  /**
+   * No es un bloque entero (losa, escalón, vidrio fino...): una escalera de mano no se sostiene en él. En el asedio de
+   * Stonehill (v0.1.53) las que se apoyaban así se cayeron al suelo como objetos.
+   */
+  readonly partial?: boolean;
+  /**
+   * Arde (madera, lana...): sostiene una escalera, pero el fuego de los pirómanos la quema con su apoyo. En el asedio
+   * de Stonehill (v0.1.53) ardía el muro de tablones de la base de la torre y caían casi todas las escaleras.
+   */
+  readonly flammable?: boolean;
 }
 
 export const FREE: RouteCell = { cost: 0, ground: false };
@@ -35,6 +45,30 @@ export interface RouteStep {
   readonly z: number;
   /** Bloques que hay que quitar para dar este paso, en orden. */
   readonly breaks: readonly Vec3[];
+  /**
+   * El paso se da por una escalera de mano que hay que poner (opción `ladders`): se llega a este paso desde el
+   * anterior subiendo o bajando por ella.
+   */
+  readonly ladder?: LadderMove;
+}
+
+/** Una casilla de una escalera de mano por poner, y hacia dónde mira: de la pared hacia fuera. */
+export interface LadderCell {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly dx: number;
+  readonly dz: number;
+}
+
+/**
+ * Una escalera de mano por poner (Limbers, 2026-11-07). Las criaturas no las usan al buscar camino: al bajar hay
+ * que meterlas en ella y bajan solas; al subir hay que subirlas (prueba de `tools/lab/ladder.ts`).
+ */
+export interface LadderMove {
+  readonly up: boolean;
+  /** De abajo arriba. */
+  readonly cells: readonly LadderCell[];
 }
 
 export interface Route {
@@ -52,6 +86,12 @@ export interface RouteOptions {
   readonly reach?: number;
   /** Máxima altura de caída voluntaria: más que esto hace daño. */
   readonly maxFall?: number;
+  /**
+   * Puede poner escaleras de mano de hasta esta altura para bajar donde la caída es mayor que `maxFall`, o para
+   * subir una pared de 2 o más bloques. Solo en casillas libres (no rompe para ponerlas) y apoyadas en un bloque
+   * macizo. Sin esto, no pone ninguna.
+   */
+  readonly ladders?: number;
 }
 
 const DEFAULT_MAX_NODES = 1500;
@@ -60,6 +100,11 @@ const DEFAULT_MAX_FALL = 3;
 /** Por encima de 1 busca más deprisa a cambio de rutas algo menos cortas. */
 const GREED = 1.2;
 const STEP_UP_COST = 1.5;
+/** Poner una escalera cuesta como unos pasos de rodeo, más un poco por bloque: se prefiere andar si se puede. */
+const LADDER_COST = 6;
+const LADDER_COST_PER_BLOCK = 1.5;
+/** De más por cada escalón apoyado en algo que arde: se busca antes una cara de piedra, pero la madera vale si no hay otra. */
+const LADDER_FLAMMABLE_COST = 3;
 const SEARCH_SLICE = 25;
 const DIRECTIONS = [
   [1, 0],
@@ -78,6 +123,7 @@ interface Node {
   f: number;
   from?: Node;
   breaks: readonly Vec3[];
+  ladder?: LadderMove;
   closed: boolean;
 }
 
@@ -156,12 +202,12 @@ export function* routeSearch(start: Vec3, goal: Vec3, cellAt: CellAt, options: R
   let bestH = estimate(sx, sy, sz);
   let nodes = 0;
 
-  const offer = (from: Node, x: number, y: number, z: number, cost: number, breaks: readonly Vec3[]) => {
+  const offer = (from: Node, x: number, y: number, z: number, cost: number, breaks: readonly Vec3[], ladder?: LadderMove) => {
     const g = from.g + cost;
     const key = keyOf(x, y, z);
     const known = seen.get(key);
     if (known && known.g <= g) return;
-    const node: Node = { x, y, z, g, f: g + GREED * estimate(x, y, z), from, breaks, closed: false };
+    const node: Node = { x, y, z, g, f: g + GREED * estimate(x, y, z), from, breaks, ...(ladder ? { ladder } : {}), closed: false };
     if (known) known.closed = true; // la versión antigua queda descartada en la cola
     seen.set(key, node);
     open.push(node);
@@ -173,6 +219,66 @@ export function* routeSearch(start: Vec3, goal: Vec3, cellAt: CellAt, options: R
       const below = cellAt(x, y - drop - 1, z);
       if (below.ground) return y - drop;
       if (below.cost !== 0) return undefined;
+    }
+    return undefined;
+  };
+
+  const ladderMax = options.ladders ?? 0;
+  /** Casilla donde cabe una escalera: libre del todo, sin romper nada. */
+  const fits = (c: RouteCell) => c.cost === 0 && !c.ground;
+  /** Bloque al que se puede apoyar una escalera: macizo y entero (no una valla, ni otra escalera). */
+  const holds = holdsLadder;
+  /**
+   * La pared para la casilla (x, y, z): primero la de detrás (`bx`, `bz`), si no cualquier otra; y antes una que no
+   * arda que una que sí.
+   */
+  const wallFor = (x: number, y: number, z: number, bx: number, bz: number): readonly [number, number] | undefined => {
+    const order: (readonly [number, number])[] = [[bx, bz], ...DIRECTIONS.filter(([wx, wz]) => wx !== bx || wz !== bz)];
+    let fallback: readonly [number, number] | undefined;
+    for (const [wx, wz] of order) {
+      const c = cellAt(x + wx, y, z + wz);
+      if (!holds(c)) continue;
+      if (!c.flammable) return [wx, wz];
+      fallback ??= [wx, wz];
+    }
+    return fallback;
+  };
+  /** Lo que cuestan de más los escalones de una escalera apoyados en algo que arde. */
+  const burnCost = (cells: readonly LadderCell[]) =>
+    LADDER_FLAMMABLE_COST * cells.filter((c) => cellAt(c.x - c.dx, c.y, c.z - c.dz).flammable).length;
+
+  /**
+   * Bajar por una escalera puesta en la columna (cx, cz), desde quien está en el borde a la altura `y`. Cada
+   * casilla se apoya en la pared que tenga, así que vale para un acantilado que no es liso. `undefined` si la
+   * columna no llega al suelo, termina en agua o hay un hueco sin pared.
+   */
+  const ladderDown = (cx: number, y: number, cz: number, dx: number, dz: number): { land: number; move: LadderMove } | undefined => {
+    const cells: LadderCell[] = [];
+    for (let yy = y - 1; yy >= y - ladderMax; yy--) {
+      if (!fits(cellAt(cx, yy, cz))) return undefined;
+      const wall = wallFor(cx, yy, cz, -dx, -dz);
+      if (!wall) return undefined;
+      cells.push({ x: cx, y: yy, z: cz, dx: -wall[0], dz: -wall[1] });
+      const below = cellAt(cx, yy - 1, cz);
+      if (below.ground) return { land: yy, move: { up: false, cells: cells.reverse() } };
+      if (below.cost !== 0) return undefined;
+    }
+    return undefined;
+  };
+
+  /**
+   * Subir por una escalera puesta en la propia casilla (x, z), apoyada en la pared de delante (dx, dz), hasta
+   * salir por encima de ella. Solo para paredes de 2 o más: un bloque se sube de un salto.
+   */
+  const ladderUp = (x: number, y: number, z: number, dx: number, dz: number): { exit: Vec3; move: LadderMove } | undefined => {
+    const cells: LadderCell[] = [];
+    for (let top = y; top < y + ladderMax; top++) {
+      if (!holds(cellAt(x + dx, top, z + dz)) || !fits(cellAt(x, top, z)) || !fits(cellAt(x, top + 1, z))) return undefined;
+      cells.push({ x, y: top, z, dx: -dx, dz: -dz });
+      if (fits(cellAt(x + dx, top + 1, z + dz)) && fits(cellAt(x + dx, top + 2, z + dz))) {
+        if (top === y || !fits(cellAt(x, top + 2, z))) return undefined;
+        return { exit: { x: x + dx, y: top + 1, z: z + dz }, move: { up: true, cells } };
+      }
     }
     return undefined;
   };
@@ -223,6 +329,18 @@ export function* routeSearch(start: Vec3, goal: Vec3, cellAt: CellAt, options: R
           offer(n, nx, y + 1, nz, STEP_UP_COST + headroom.cost + upperHead.cost + upperFeet.cost, breaks);
         }
       }
+
+      if (ladderMax > 0) {
+        // Por una escalera puesta: hacia abajo, donde la caída es demasiado alta; hacia arriba, por una pared.
+        if (fits(feet) && fits(head) && landing(nx, y, nz) === undefined) {
+          const down = ladderDown(nx, y, nz, dx, dz);
+          if (down) offer(n, nx, down.land, nz, LADDER_COST + LADDER_COST_PER_BLOCK * (y - down.land) + burnCost(down.move.cells), [], down.move);
+        }
+        if (holds(feet) && !fits(head)) {
+          const up = ladderUp(x, y, z, dx, dz);
+          if (up) offer(n, up.exit.x, up.exit.y, up.exit.z, LADDER_COST + LADDER_COST_PER_BLOCK * (up.exit.y - y) + burnCost(up.move.cells), [], up.move);
+        }
+      }
     }
 
     // Por la escalera de mano, hacia arriba.
@@ -246,7 +364,7 @@ export function* routeSearch(start: Vec3, goal: Vec3, cellAt: CellAt, options: R
 
 function unwind(last: Node): RouteStep[] {
   const steps: RouteStep[] = [];
-  for (let n: Node | undefined = last; n?.from; n = n.from) steps.push({ x: n.x, y: n.y, z: n.z, breaks: n.breaks });
+  for (let n: Node | undefined = last; n?.from; n = n.from) steps.push({ x: n.x, y: n.y, z: n.z, breaks: n.breaks, ...(n.ladder ? { ladder: n.ladder } : {}) });
   return steps.reverse();
 }
 
@@ -258,10 +376,19 @@ const LADDER = /:ladder$|scaffolding/;
 const NO_STEP = /fence|_wall$|trapdoor/;
 /** Lo que nadie rompe: los del propio juego, y los que guardan algo que se perdería. */
 const UNBREAKABLE = /bedrock|barrier|command_block|structure_|border_block|:allow|:deny|portal|light_block|reinforced_deepslate|chest|barrel|shulker|hopper|dispenser|dropper|furnace|smoker|sign|banner|lectern|jukebox|spawner|:bed$/;
+/** No son bloques enteros: no sostienen una escalera de mano. La losa doble sí es entera. */
+const PARTIAL = /(?<!double_)slab|stairs|fence|_wall$|trapdoor|_pane$|iron_bars|chain|lantern|leaves|campfire|anvil|cake|candle|flower_pot|_head$|skull|chest|:bed$|lectern|hopper|bell|grindstone|stonecutter|enchanting_table|end_rod|lightning_rod|cactus|bamboo|composter|cauldron|brewing_stand|daylight_detector|_sign$|banner/;
+/** Arde: no conviene apoyar una escalera en ello. */
+const FLAMMABLE = /planks|_log$|_wood$|_stem$|hyphae|leaves|wool|hay_block|bookshelf|bamboo_block|_fence$|fence_gate/;
 const SOFT = /planks|log|wood|fence|door|leaves|wool|glass|hay|bookshelf|ladder|dirt|grass_block|mud|sand|gravel/;
 
 const SOFT_COST = 4;
 const HARD_COST = 6;
+
+/** ¿Sostiene una escalera de mano? Un bloque entero que se pisa, que no es otra escalera ni una valla. */
+export function holdsLadder(c: RouteCell): boolean {
+  return c.ground && c.cost !== 0 && !c.climb && !c.noStep && !c.partial;
+}
 
 /** Traduce un tipo de bloque a lo que significa para una ruta. */
 export function classifyBlock(typeId: string): RouteCell {
@@ -269,7 +396,9 @@ export function classifyBlock(typeId: string): RouteCell {
   if (LIQUID.test(typeId)) return HAZARD;
   if (LADDER.test(typeId)) return CLIMB;
   if (PASSABLE.test(typeId)) return FREE;
-  if (UNBREAKABLE.test(typeId)) return SOLID;
+  const partial = PARTIAL.test(typeId);
+  const flammable = FLAMMABLE.test(typeId);
+  if (UNBREAKABLE.test(typeId)) return partial || flammable ? { ...SOLID, ...(partial ? { partial } : {}), ...(flammable ? { flammable } : {}) } : SOLID;
   const cost = SOFT.test(typeId) ? SOFT_COST : HARD_COST;
-  return NO_STEP.test(typeId) ? { cost, ground: true, noStep: true } : { cost, ground: true };
+  return { cost, ground: true, ...(NO_STEP.test(typeId) ? { noStep: true } : {}), ...(partial ? { partial } : {}), ...(flammable ? { flammable } : {}) };
 }

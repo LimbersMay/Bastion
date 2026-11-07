@@ -876,6 +876,24 @@
             },
             {
               "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_to_keep"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_keep"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
                 "test": "has_tag",
                 "subject": "other",
                 "value": "bastion_rally"
@@ -976,7 +994,7 @@
                 ]
               },
               "max_dist": 256,
-              "priority": 0
+              "priority": 1
             },
             {
               "filters": {
@@ -1013,7 +1031,7 @@
                 ]
               },
               "max_dist": 32,
-              "priority": 1
+              "priority": 2
             },
             {
               "filters": {
@@ -1041,7 +1059,7 @@
                 ]
               },
               "max_dist": 6,
-              "priority": 1
+              "priority": 2
             }
           ],
           "scan_interval": 40
@@ -1081,8 +1099,10 @@
         "height": 1.9
       },
       "minecraft:health": {
-        "value": 30,
-        "max": 30
+        "value": {
+          "range_min": 27,
+          "range_max": 33
+        }
       },
       "minecraft:movement": {
         "value": 0.24

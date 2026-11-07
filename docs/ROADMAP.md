@@ -7,9 +7,54 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-06. Versión de los packs: 0.1.43. Rama: `feature/old-fallen-castle`, sin subir. La Fase 2 está commiteada (8a6bb88).*
+*Última actualización: 2026-11-07. Versión de los packs: 0.1.55 (última de Bedrock salvo que Limbers pida más). Rama: `feature/old-fallen-castle`, sin subir. La Fase 2 está commiteada (8a6bb88); lo de la Fase 3 (v0.1.44-0.1.45), aún no: Limbers pidió commitear solo al cerrar la fase.*
 
-- **Fase actual:** termina la Fase 2 (unidades estándar); la siguiente sesión empieza la Fase 3, combate orgánico. Lo que sigue es el historial de la Fase 2.
+- **Fase actual:** Fase 3, combate orgánico. Orden elegido por Limbers (2026-11-06): variación, grupos contra la bolita, moral y cuerno de rescate. El cuerno va al final para aprovechar los grupos.
+- **Variación entre unidades (v0.1.44), elegida por Limbers:** cada unidad nace con un ±10 % de vida y cada golpe varía otro ±10 % (`VARIATION` en `tools/units/generate.ts`). Las cifras pequeñas (golpes de 2 o 3) quedan fijas. La vida no lleva máximo fijo: el juego toma lo que sale y el descanso cura hasta ahí. Medido en el servidor: soldados aliados con 55 a 65 de vida y guerreros con 73 a 84; golpes de 9 a 11 (soldado aliado), 8 a 10 (invasor) y 12,5 a 13,5 (guerrero). Las flechas y los proyectiles no varían. Sin ver en juego.
+- **Grupos y reserva (v0.1.45):** el director (`scripts/systems/squads.ts`, lógica en `squadLogic.ts`) junta a quienes pelean cuerpo a cuerpo en grupos de hasta 8 y da a cada grupo un enemigo distinto; avanzan como mucho 1,5 grupos por grupo enemigo y el resto espera 30 s como mucho. Medido en campo abierto (`tools/lab/field.ts`, resultados en [IA.md](IA.md), «Grupos en campo abierto»): repartir objetivos no deshace la bolita; la reserva sí la reduce. `scriptevent bastion:squads on|off` para comparar.
+- **Moral (v0.1.45):** un grupo aliado superado y castigado se repliega al patio y después a la torre (`map.keep`, opcional; Stonehill aún no la tiene). En el descanso vuelven a su sitio. En la partida hubo varios repliegues por oleada, y la mayoría de los que se replegaban morían por el camino (2 de 13 vivos en la oleada 1).
+- **Peleas estancadas (v0.1.45), elegidas por Limbers:** Limbers vio dos veces la oleada 2 de Stonehill parada.
+  - **Último reducto:** si solo quedan tiradores aliados y pasan 20 s sin bajas, bajan al patio. En la prueba de la v0.1.45 el pirómano de lo alto de la torre de la esquina no bajó (no hay camino a pie desde allí) y los invasores se amontonaron debajo, en el pasaje. Desde la v0.1.46, quien en 10 s no se acerca al patio se lleva allí con una nube de humo (elegido por Limbers, 2026-11-07). **Es provisional: Limbers quiere analizarlo a fondo más adelante para mejorarlo**; su propuesta es que pongan escaleras de mano, por probar (ver [IA.md](IA.md), «Idea pendiente»).
+  - **Grupos sin camino:** un grupo que pasa 15 s sin acercarse a su objetivo ni pelear lo deja y no lo vuelve a elegir; el invasor vuelve a la ruta de subida desde el hito más cercano. Causa vista: un grupo invasor perseguía a un arquero de la muralla trepando el acantilado (unos 14 bloques por debajo de la puerta) y el rescate de atascados lo dejaba siempre en el mismo hueco.
+  - **Red de seguridad (`stallLogic.ts`):** tras 45 s sin bajas, sin bloques de muro rotos y sin brechas, los invasores que no se han movido 8 bloques en ese tiempo, y no tienen motivo para estar quietos, desaparecen con humo («abandonan el asedio») y la oleada termina. Tras 90 s sin bajas, estar junto a un enemigo ya no cuenta como pelear (v0.1.47: en el acantilado quedaron invasores y aliados en salientes distintos, a 2-5 bloques, sin poder golpearse).
+- **Director de inalcanzables (v0.1.52), elegido por Limbers (2026-11-07), sin probar en juego:** cuando un grupo deja a su objetivo, de cualquier bando, el director busca una ruta a pie hasta él y guía al grupo (los invasores rompen dentro de la zona de asedio; los aliados solo caminan, y solo con la orden de ataque). Si nadie llega y la pelea lleva 20 s sin bajas, el inalcanzable baja a pelear (al patio el aliado, a la ruta de subida el invasor) y, sin camino, con humo. El último reducto usa la misma bajada; el abandono a los 45 s queda como red de seguridad. Fuera de este lote: tiradores a un sitio con vista y unidades aéreas. Detalle en [IA.md](IA.md), «el director decide qué hacer con las unidades inalcanzables».
+  - **Prueba de escaleras de mano (2026-11-07, hecha, vista en vivo por Limbers):** las criaturas no se meten solas en la escalera, ni guiadas hasta el borde (0 de 5). Si el script las mete en ella (un bloque), **bajan solas** (5 de 5, 3 s); **subir no suben**, salvo que el script las suba a la velocidad de trepar (5 de 5, 6 s). Las fuentes coinciden: el buscador de caminos de andar no usa escaleras, y solo el de las arañas trepa ([refs/rutas-y-escalada.md](refs/rutas-y-escalada.md)). **Decidido por Limbers (2026-11-07):** primero, escaleras solo para bajar; después pidió también subir, aunque sea asistido (hecho en la v0.1.53, abajo). El modo araña, para una futura unidad que trepe muros. Detalle en [IA.md](IA.md), «Prueba de escaleras de mano».
+- **Escaleras del director (v0.1.53), pedidas por Limbers (2026-11-07), probadas en el laboratorio y en un asedio (abajo):** el planificador pone escaleras de mano (hasta 24 bloques) para bajar o para subir, encadenadas en terreno irregular; el director mete en ellas a quien va por la ruta y lo sube o lo baja a la velocidad de trepar (`ladders.ts`). Sirve a los grupos guiados del paso 1 (los invasores también por fuera de la muralla, como asalto, elegido por Limbers) y a quien baja en el paso 3 y en el último reducto; el humo queda solo para cuando ni con escaleras hay ruta. En el laboratorio (`tools/lab/climb.ts`), 12 de 12: acantilado irregular con saliente, cornisa y bultos (bajar 3 de 3, 12-21 s; subir 3 de 3, 11-12 s, dos escaleras cada vez) y muralla con almenas (subir y bajar 3 de 3, 2-3 s). Detalle en [IA.md](IA.md), «Escaleras del director».
+- **Limbers vio la v0.1.53 en un asedio de Stonehill (2026-11-07), en modo espectador:** los invasores subieron por escaleras a por los arqueros de una torre, cruzaron el puente a la otra y, cuando un arquero cayó al puente, bajaron a por él y volvieron a subir a por el que quedaba. Pero llegaban y golpeaban sin hacer daño, se quedaban arriba al acabar, y las escaleras de la base de la torre caían (el fuego de los pirómanos quemaba el muro de tablones).
+- **Arreglos de la v0.1.54, subidos en caliente durante esa prueba:**
+  - **Toque al llegar (elegido por Limbers):** quien llega junto a su objetivo recibe de él 1 de daño y así lo ataca de verdad. Antes golpeaba al marcador del grupo, porque el juego no cuenta las escaleras como camino. Ahora el objetivo cae 8-11 s después.
+  - **Bajadas por la ruta (Limbers dijo sí):** quien sube por escaleras baja por la ruta al fallar, al morir su objetivo o a los 60 s; y quien baja sigue la ruta paso a paso, en lugar de empujar hacia el hito de abajo.
+  - **Escaleras repuestas (Limbers dijo sí):** si una escalera en uso cae y su apoyo sigue en pie, se vuelve a poner. El planificador prefiere apoyarlas en piedra antes que en madera, y no las apoya en losas, trampillas ni otros bloques a medias.
+  - **Plazo según la ruta:** de 30 a 120 s según los pasos y las escaleras; antes, 30 s fijos.
+  - **Resultado en la oleada 1:** «Atasco» de 2 a 0, «Encajado» de 21 a 1 y 6 bajadas por la ruta (antes 0). Los ticks/s, a 20,0 de media y 19,2 en el peor momento. Lo que falta está en [IA.md](IA.md), «Escaleras del director».
+  - **Cómo se probó sin reiniciar el servidor:** [tools/lab/README.md](../tools/lab/README.md), «Pruebas en vivo, sin reiniciar el servidor».
+- **Evaluando ahora:** partida completa en Stonehill con la v0.1.47 (el cuerno no cambia nada sin jugador) (`siege_ab.mjs on 6`, sin jugador, sin monstruos del juego, de día). Se mira:
+  1. que la oleada 2 termine en vez de quedarse parada;
+  2. si salen las líneas «Sin camino», «Último reducto» y «Atasco» del registro, y cuántas veces;
+  3. la duración y las bajas de cada oleada, comparadas con la partida sin director (oleada 1: 131 s; la oleada 2 se paró con aliados en la torre).
+- **Prueba de la v0.1.47 (cortada para pasar el servidor a la v0.1.48):** la oleada 1 terminó en 159 s, con un grupo aliado y uno invasor que dejaron su objetivo; la oleada 2 llevaba 3 min en marcha. Falta una partida completa.
+- **Cuerno de rescate (v0.1.48), valores por defecto de Claude, sin probar en juego:** si un jugador en supervivencia tiene 3 o más invasores a 5 bloques, suena el cuerno de cabra y los 6 aliados cuerpo a cuerpo más cercanos (a 40 bloques, sin contar regresando ni replegados) pasan a la orden de ataque, fuera de los grupos del director. Vuelven a su orden cuando el jugador no tiene invasores a 8 bloques o a los 30 s; un cuerno cada 30 s por jugador (`RESCUE_DEFAULTS` en `scripts/systems/rescueLogic.ts`). En el servidor no se puede probar: hace falta un jugador en supervivencia (`scriptevent bastion:spectate off`).
+- **Limbers probó la v0.1.48:** los invasores no le atacaban porque el servidor le tenía en creativo (el modo espectador de `serve`), y sin ser operador no podía cambiarlo con comandos.
+- **Cuerno en la mano y brújula de modo (v0.1.49), pedidos por Limbers:** el equipo trae un cuerno de cabra («Cuerno de rescate»): al tocarlo acude un grupo, los 8 aliados cuerpo a cuerpo más cercanos estén donde estén, 45 s como mucho, una vez por minuto (`HORN_RESCUE`). Limbers eligió un grupo y no a todos, para no vaciar la defensa. Y una brújula («Modo: jugar o mirar») que cambia entre supervivencia y creativo sin comandos ni permisos. El cuerno automático sigue igual. Quien ya tenía el equipo los recibe al empezar el siguiente asedio.
+- **Limbers probó la v0.1.49:** el chat decía «8 aliados acuden», pero nadie llegaba. Causa: el cuerno les daba la orden de ataque general, que va a por el invasor más cercano *a cada aliado* (a 24 bloques), no hacia el jugador; y quien no tenía invasores cerca se quedaba quieto. Además sacaba a aliados en plena pelea.
+- **Escolta del cuerno (v0.1.50), elegida por Limbers (2026-11-07), sin probar en juego:** el cuerno en la mano trae una **escolta de 4** que se queda con el jugador **hasta el fin de la oleada** y **no obedece las órdenes generales** (pluma, vara, brecha). Tocarlo otra vez (una vez por minuto) la completa si ha perdido a alguien; **agachado, la despide**. Sin nadie libre, el cuerno no se gasta.
+  - **De dónde salen** (`rescueTier`): primero la reserva del director, luego los sueltos, luego los grupos que avanzan sin haber llegado al enemigo; nunca quien tiene un invasor a 6 bloques.
+  - **Cómo siguen al jugador** (`rescue.ts`): un marcador invisible va con él. Lejos (más de 10 bloques), el escolta va hacia el marcador y solo se para con quien tenga a 6 (modo `bastion:escort`); a 4 bloques o menos pasa a vigilar: pelea con quien se acerque a 10 y pasea a su alrededor (modo `bastion:guard`).
+  - **Cuerno automático** (te rodean 3 invasores): sigue siendo un rescate temporal, pero ahora también va hacia el jugador y con la misma preferencia; al quedar libre vuelven a su orden. Antes, al terminar la oleada quedaban en la orden de ataque; ya no.
+- **Limbers probó la v0.1.50 en la tablet (2026-11-07): la escolta funciona.** En Stonehill, oleadas 1 y 2: la escolta se formó con 1, 3 y 3 aliados, y una vez se completó con 1 más; nunca llegó a 4 porque había pocos libres (los demás peleaban o la moral los había replegado al patio, que tampoco acuden). Una vez no acudió nadie. La moral replegó grupos 8 veces en dos oleadas. Desde entonces, quien entra al servidor sin la brújula de modo la recibe (antes solo el reloj).
+- **Lo que vio Limbers en esa prueba:** las peleas bien, pero los aliados se lanzaban a la pelea aunque fueran 5 contra 40, y salían del castillo de uno en uno en vez de aguantar la posición. En el registro: el grupo de 8 del pasaje se replegó al patio por la moral y, desde entonces, los refuerzos (1 a 3 cada 5 s) salían del patio con la orden de ataque a por el invasor más cercano; se gastaron 19 de 30 en 2 minutos.
+- **Postura defensiva (v0.1.51), elegida por Limbers (2026-11-07), sin probar en juego:** el defensor aguanta y deja que el atacante venga a él. Con la orden de ataque (la vara) no cambia nada: decide el jugador.
+  - **A. Los refuerzos defienden:** al aparecer corren a un puesto de defensa libre (o al patio) y lo defienden, en vez de salir a atacar (`AllyOrders.deploy`).
+  - **B. No salen del castillo:** quien cuerpo a cuerpo pasa al otro lado de una puerta (más cerca del frente que de la meta, a ±6 de su altura y a 48 bloques como mucho) vuelve a un puesto (`stanceLogic.ts`, `isOutside`). Comprobado que en los 4 mapas ningún aliado, puesto, patio, torre ni refuerzo queda «fuera».
+  - **C. Miden fuerzas:** quien tiene a 16 bloques el doble de invasores que aliados (y jugadores) a 12 aguanta: solo va a por quien se le acerca a 5 y no sale tras quien le dispara de lejos (a más de 8). Deja de aguantar cuando quedan 1,5 o menos por aliado (`HOLD_LINE_TAG`, `stance.ts`). El registro de grupos dice cuántos aguantan.
+  - **D. Refuerzos en grupo:** para la Fase 4.
+- **Torre de Stonehill (v0.1.51):** la sala grande al norte del patio (x -330..-316, z 184..192), con la puerta al patio en x -318, z 193; marcador en -325.5, 128, 188.5. Se llega a pie desde el patio en 29 pasos (comprobado con `tools/shores.mjs route` sobre el mundo real).
+- **Siguiente paso:** la prueba inicial en `../Bastion-Java` (ver su `docs/PRUEBA-INICIAL.md`). En este repositorio queda pendiente el commit de la Fase 3 (v0.1.44-0.1.55), cuando Limbers dé el OK.
+- **Coste de la batalla grande: causa encontrada (2026-11-07, Limbers pidió buscar la causa).** Con unas 400 unidades había caído a 2-4 ticks/s (la v0.1.24 daba 7,5). La causa es `reselect_targets: true` en los buscadores de enemigo: quien ya tiene objetivo revisa en cada tick todas las entradas, y la Fase 3 añadió 16 entradas de grupo a cada buscador. Sin él la batalla va a 19-20 ticks/s, pero las unidades no sueltan su objetivo cuando el script les cambia las etiquetas: en Stonehill los invasores se atascaban en el primer hito. Despertarlas con un grupo vacío no funcionó. **En la v0.1.55 `reselect_targets` vuelve a estar puesto** (todo como antes de la investigación). Detalle en [IA.md](IA.md), «Coste en batallas grandes, otra vez».
+- **Migración a Minecraft Java decidida (Limbers, 2026-11-07).** Jugará en Arch Linux y quiere realismo: muros que se pican con animación, escaleras que ponen los propios invasores, barcos de verdad, rutas sin rescates; y más adelante aéreas, acuáticas, arietes y dragones. Bedrock no deja controlar la navegación y obliga a parches. Stack: Fabric + Kotlin + GeckoLib + GameTest + Spark. El proyecto nuevo y su guía están en `../Bastion-Java`; lo primero es una prueba acotada. Este repositorio queda como referencia y no se sigue desarrollando salvo que Limbers lo pida.
+- **Anotado para la Fase 4 (Limbers, 2026-11-07):** pasar de «un castillo por mapa» a **lugares** (castillo, aldeas, torres...) con reglas comunes: defender su lugar, aguantar en desventaja y retirarse al lugar amigo más cercano con tropas o a la base principal. Detalle en [IA.md](IA.md), «Primer paso de la Fase 4».
+
+Lo que sigue es el historial de la Fase 2.
 - **Fichas (v0.1.25):** cada unidad es una ficha en `scripts/units/catalog.ts` y `npm run units` genera sus archivos. Las 4 unidades salen iguales que antes, comprobado campo por campo. La única diferencia es que el evento de asedio del mago ahora también le quita el modo de asalto. Batalla de referencia sin jugador: 34 aliados y 45 invasores caídos, 146 bloques; antes, 34 y 50, 121 bloques. Mismo resultado.
 - **Armas (v0.1.26), sin ver en juego:** espada de hierro (soldado aliado), hacha de hierro (invasor), vara de blaze (pirómano) y vara de breeze (mago). No se sueltan al morir. El arma suma su daño al golpe (medido en el servidor). El generador hace que el golpe sea siempre el de la ficha.
 - **Daño completo de las armas (v0.1.27), elegido por Limbers, sin probar en juego:** golpe de 10 el soldado aliado y 9 el invasor, antes 4. Duelos de 6 a 10,5 s, antes 15 a 22,5. Al jugador le pegan 9.
@@ -44,7 +89,7 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 - **Fin de la salida (v0.1.43):** con la orden de ataque salen solo a por los invasores; cuando muere el último y no queda ninguno por salir, vuelven solos a los puestos de defensa (o a los suyos, sin puestos) con un aviso en el chat.
 - **Modo espectador para las pruebas (v0.1.43):** `/scriptevent bastion:spectate on|off`. Con él, el asedio deja a los jugadores en creativo en vez de en supervivencia. `tools/bds.mjs serve` lo activa al arrancar.
 - **Limbers probó la v0.1.43:** todo bien. Fase 2 cerrada.
-- **Siguiente paso:** empezar la Fase 3, combate orgánico (ver «Fases»). Pendiente de la Fase 2: más skins de arquero invasor.
+- Pendiente de la Fase 2: más skins de arquero invasor.
 - **Vigilar:** el 73 % de las búsquedas de ruta agotan su límite. Falta medirlas con la partida corriendo dentro de la tablet.
 - **Pendiente de decidir:** ver «Decisiones abiertas».
 
@@ -101,7 +146,7 @@ Capacidad medida en el servidor (PC), con 20 ticks/s como velocidad normal:
 | unas 320 a 350 | 12 |
 | unas 390 | de 15 a 11, con bajones a 9 |
 
-Esa tabla es anterior a `must_reach` en los invasores (v0.1.21). Con la v0.1.23, unas 390 unidades iban a 4 ticks/s; con el aligerado (v0.1.24), a unos 7,5. Se mide con `tools/lab/cost.mjs`.
+Esa tabla es anterior a `must_reach` en los invasores (v0.1.21). Con la v0.1.23, unas 390 unidades iban a 4 ticks/s; con el aligerado (v0.1.24), a unos 7,5; desde la Fase 3, a 2-4 (sin `reselect_targets` irían a 19-20, pero con atascos). Se mide con `tools/lab/cost.mjs`.
 
 Primera referencia para el tope: unas 220 unidades. Con unas 130 la tablet no se trabó; con más, aún no hay respuesta.
 
@@ -159,20 +204,33 @@ Una unidad se define con una ficha de datos, y un generador crea sus archivos de
 - [x] La orden de ataque termina sola cuando no quedan invasores.
 - [x] Rol de arquero: arco en la mano, postura de apuntar y flecha propia que desaparece al chocar.
 - [x] Primeras unidades nuevas: guerrero y arquero aliados, arquero invasor (de momento solo en Stonehill).
-- [ ] Algo de variación en vida o daño por unidad, para que los duelos no estén decididos de antemano (propuesto en [IA.md](IA.md)). Pasa a la Fase 3.
+- [x] Algo de variación en vida o daño por unidad, para que los duelos no estén decididos de antemano. Hecho en la Fase 3 (v0.1.44).
 
-### Siguiente: Fase 3, combate orgánico
+### En curso: Fase 3, combate orgánico
 
-Para que no se pelee en bolita ni a toda velocidad.
+Para que no se pelee en bolita ni a toda velocidad. Orden: variación, grupos, moral y cuerno.
 
-- Evitar la bolita. Las parejas con etiquetas se probaron y no la reducen; la propuesta es un director que reparta grupos por el frente (ver «Decisiones abiertas» e [IA.md](IA.md)).
-- Moral: un grupo superado se repliega de la muralla al patio y luego a la torre.
-- Rescate: si rodean al jugador, suena un cuerno y acuden los aliados más cercanos.
+- [x] Variación: ±10 % de vida al nacer y ±10 % en cada golpe (v0.1.44). Medido en el servidor.
+- [ ] Ver la variación en juego (Limbers).
+- [x] Grupos con objetivos repartidos y reserva (v0.1.45). Medido en campo abierto y en Stonehill.
+- [x] Moral: un grupo superado se repliega al patio y luego a la torre (v0.1.45). Torre de Stonehill elegida (v0.1.51).
+- [x] Postura defensiva: los refuerzos defienden un puesto, nadie sale del castillo con la orden de defender y quien está en desventaja aguanta en su sitio (v0.1.51). Sin probar en juego.
+- [x] Peleas estancadas: último reducto, grupos sin camino y red de seguridad (v0.1.45). En prueba.
+- [ ] Ver grupos, moral y peleas estancadas en juego (Limbers).
+- [x] Director de inalcanzables: ruta a pie y, si nadie llega, bajan a pelear, en los dos bandos (v0.1.52). Sin probar en juego.
+- [x] Prueba de escaleras de mano en el laboratorio (`scriptevent bastion:lab ladder`): bajan si se las mete; para subir hay que subirlas.
+- [x] Escaleras de mano del director, para bajar y para subir, en lugar del humo (v0.1.53). Probadas en el laboratorio en terreno irregular y vistas por Limbers en la oleada 1 de Stonehill; toque al llegar, bajadas por la ruta y escaleras repuestas (v0.1.54).
+- Idea: tropas adecuadas (tiradores con vista, aéreas) contra las unidades inalcanzables.
+- [x] Rescate: si rodean al jugador, suena un cuerno y acuden los aliados más cercanos (v0.1.48). Sin probar en juego.
+- [x] Escolta del cuerno en la mano: 4 aliados libres que se quedan con el jugador hasta el fin de la oleada (v0.1.50). Sin probar en juego.
+- [x] Ver el cuerno en juego (Limbers, en supervivencia, v0.1.50).
 
 ### Fase 4, guerra progresiva
 
-- Mismo tope de unidades en el campo para cada bando, y una reserva que entra por grupos conforme caen. Es lo que permitiría batallas de 400 por bando: con unas 400 a la vez el servidor ya va a 7,5 ticks/s.
+- **Primero: «lugares» en vez de un solo castillo** (pedido por Limbers, 2026-11-07). Cada mapa declara sus lugares (castillo, aldeas, torres de vigía...), cada uno con su zona, sus puestos, su punto de reunión y su guarnición. Reglas iguales en todos: defender su lugar sin salir de su zona, aguantar en desventaja y, si los superan, retirarse al lugar amigo más cercano que aún tenga tropas o a la base principal. Los mapas de hoy pasan a ser un mapa con un solo lugar, sin reescribirlos. Estado actual, diseño y coste en [IA.md](IA.md), «Primer paso de la Fase 4».
+- Mismo tope de unidades en el campo para cada bando, y una reserva que entra por grupos conforme caen. Es lo que permitiría batallas de 400 por bando: con unas 400 a la vez el servidor va a 2-4 ticks/s por `reselect_targets` (ver «Coste de la batalla grande»).
 - Ritmo por etapas: escaramuzas, choque fuerte, respiro y nuevo empuje.
+- Rutas para mapas grandes: búsqueda por niveles (cada lugar, una zona) o campos de flujo (muchas unidades hacia la misma meta). Investigado, sin probar: [IA.md](IA.md), «Rutas en mapas grandes», y [refs/rutas-y-escalada.md](refs/rutas-y-escalada.md).
 - Regla de derrota: perder también cuando no quedan aliados ni reservas.
 - Cada oleada tiene un presupuesto de puntos que se gasta en unidades, según su coste.
 - El presupuesto se ajusta con moderación según los aliados vivos y los jugadores.
@@ -193,6 +251,7 @@ Para que no se pelee en bolita ni a toda velocidad.
 ### Más adelante
 
 - Unidades aéreas y acuáticas, con más frentes en Old Fallen Castle.
+- Una unidad que trepe muros (un monstruo), con el buscador de caminos de las arañas (`navigation.climb`). Idea de Limbers (2026-11-07) tras la prueba de escaleras.
 - Civiles que huyen.
 - Modelos y accesorios propios (armaduras, armas a medida) y arte definitivo.
 - Pedir permiso a los autores de las skins (`docs/SKINS.md`) o cambiarlas antes de publicar.
@@ -200,8 +259,7 @@ Para que no se pelee en bolita ni a toda velocidad.
 ## Decisiones abiertas
 
 - **Límites de la caza.** Hoy no se rompe nada fuera de la zona de asedio, el modo creativo no es presa y los aliados no se abren paso. Falta decidir si se queda así.
-- **Parejas o grupos repartidos.** Las parejas 1 contra 1 no redujeron la bolita, duplicaron el ritmo y bajaron el servidor a 4,7 ticks/s con 100 contra 100. Propuesta: sustituirlas en la Fase 3 por grupos con destinos distintos, aún sin probar.
-- **Unidad atorada en el regreso.** Si un invasor se atasca para siempre, la oleada no termina. Hoy no hay teletransporte, porque no se quiere. Opción: usarlo solo como último recurso tras varios minutos sin avanzar.
+- **Unidades inalcanzables (de cualquier bando).** Desde la v0.1.52 el director busca ruta y, si nadie llega, las hace bajar; el abandono a los 45 s queda como red de seguridad. Desde la v0.1.53 pone escaleras para bajar y para subir; el humo queda para cuando ni así hay ruta. Desde la v0.1.54 quien llega por escaleras recibe un toque de su objetivo para atacarlo de verdad. Falta decidir si se añaden tiradores con vista o unidades aéreas. Ver [IA.md](IA.md).
 - **Oleada sin jugadores que cazar.** Con la caza, sin aliados vivos van a por el jugador y la partida termina al agotar sus vidas. Si todos los jugadores están en creativo o desconectados, no termina. Se resuelve con la regla de derrota de la Fase 4.
 - **Aliados al otro lado del muro.** Quien cae regresa por el puente y queda fuera hasta que el muro se abre. Hoy pelea ahí.
 
@@ -216,6 +274,7 @@ Para que no se pelee en bolita ni a toda velocidad.
 - **Salir del agua en balsa:** las criaturas no dirigen un barco, así que la balsa es propia y la lleva el guion. Se suma a las varias orillas de salida y al empujón (elegido por Limbers, 2026-11-06; antes, solo orillas y empujón, 2026-11-05).
 - **Las armas dan su daño completo (2026-11-06):** golpe de 10 y 9 en los soldados. La ficha guarda el golpe total y el generador descuenta lo que suma el arma del daño base, así que cambiar de arma no cambia el golpe sin querer.
 - **Comprobar el camino solo de cerca:** `must_reach` solo hasta 24 bloques y búsqueda de enemigo cada 2 s, porque era lo que más pesaba en batallas grandes. Elegido por Limbers entre tres opciones (2026-11-05).
+- **Migrar a Minecraft Java con Fabric (2026-11-07):** Limbers jugará en Arch Linux y quiere realismo que Bedrock no permite sin parches. Mientras tanto, Bedrock se queda con `reselect_targets: true`.
 - **Ritmo de las peleas:** un duelo entre soldados dura de 6 a 10,5 s desde la v0.1.27, con el daño completo de las armas. Antes: 15 a 30 s, y 15 a 22,5 s desde la v0.1.23.
 - **Aliados inmunes al fuego:** causaba cerca de dos tercios de sus bajas y los invasores ya eran inmunes. La explosión sí les hace daño.
 - **Piromanos escasos:** unos 8 a 10 de cada 80 unidades, porque hacen mucho daño y destrozan el mapa.

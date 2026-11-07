@@ -39,23 +39,61 @@
         },
         "minecraft:behavior.hurt_by_target": {
           "priority": 1,
-          "entity_types": {
-            "filters": {
-              "any_of": [
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "bastion_invader"
-                },
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "monster"
-                }
-              ]
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 48
             },
-            "max_dist": 48
-          }
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 8
+            }
+          ]
         },
         "minecraft:behavior.nearest_prioritized_attackable_target": {
           "priority": 3,
@@ -65,12 +103,50 @@
           "entity_types": [
             {
               "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "bastion_invader"
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
               },
               "max_dist": 16,
               "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "bastion_intruder"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 16,
+              "priority": 1
             },
             {
               "filters": {
@@ -82,21 +158,76 @@
                   },
                   {
                     "test": "has_tag",
-                    "subject": "other",
-                    "value": "bastion_intruder"
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
                   }
                 ]
               },
-              "max_dist": 16,
+              "max_dist": 6,
               "priority": 1
             },
             {
               "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "monster"
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
               },
-              "max_dist": 6,
+              "max_dist": 5,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "bastion_intruder"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "monster"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
               "priority": 1
             }
           ],
@@ -120,23 +251,61 @@
         },
         "minecraft:behavior.hurt_by_target": {
           "priority": 1,
-          "entity_types": {
-            "filters": {
-              "any_of": [
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "bastion_invader"
-                },
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "monster"
-                }
-              ]
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 48
             },
-            "max_dist": 48
-          }
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 8
+            }
+          ]
         },
         "minecraft:behavior.nearest_prioritized_attackable_target": {
           "priority": 3,
@@ -146,12 +315,50 @@
           "entity_types": [
             {
               "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "bastion_invader"
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
               },
               "max_dist": 24,
               "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "bastion_intruder"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 24,
+              "priority": 1
             },
             {
               "filters": {
@@ -163,21 +370,76 @@
                   },
                   {
                     "test": "has_tag",
-                    "subject": "other",
-                    "value": "bastion_intruder"
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
                   }
                 ]
               },
-              "max_dist": 24,
+              "max_dist": 6,
               "priority": 1
             },
             {
               "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "monster"
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
               },
-              "max_dist": 6,
+              "max_dist": 5,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "bastion_intruder"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "monster"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
               "priority": 1
             }
           ],
@@ -651,23 +913,61 @@
         },
         "minecraft:behavior.hurt_by_target": {
           "priority": 1,
-          "entity_types": {
-            "filters": {
-              "any_of": [
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "bastion_invader"
-                },
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "monster"
-                }
-              ]
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 48
             },
-            "max_dist": 48
-          }
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 8
+            }
+          ]
         },
         "minecraft:behavior.nearest_prioritized_attackable_target": {
           "priority": 3,
@@ -677,12 +977,50 @@
           "entity_types": [
             {
               "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "bastion_invader"
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
               },
               "max_dist": 16,
               "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "bastion_intruder"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 16,
+              "priority": 1
             },
             {
               "filters": {
@@ -694,21 +1032,76 @@
                   },
                   {
                     "test": "has_tag",
-                    "subject": "other",
-                    "value": "bastion_intruder"
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
                   }
                 ]
               },
-              "max_dist": 16,
+              "max_dist": 6,
               "priority": 1
             },
             {
               "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "monster"
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
               },
-              "max_dist": 6,
+              "max_dist": 5,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "bastion_intruder"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "monster"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
               "priority": 1
             }
           ],
@@ -966,6 +1359,24 @@
             },
             {
               "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_to_keep"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_keep"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
                 "test": "has_tag",
                 "subject": "other",
                 "value": "bastion_rally"
@@ -999,23 +1410,61 @@
         },
         "minecraft:behavior.hurt_by_target": {
           "priority": 1,
-          "entity_types": {
-            "filters": {
-              "any_of": [
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "bastion_invader"
-                },
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "monster"
-                }
-              ]
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 48
             },
-            "max_dist": 48
-          }
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 8
+            }
+          ]
         },
         "minecraft:behavior.nearest_attackable_target": {
           "priority": 3,
@@ -1026,28 +1475,74 @@
               "filters": {
                 "all_of": [
                   {
-                    "test": "is_family",
-                    "subject": "other",
-                    "value": "bastion_invader"
-                  },
-                  {
-                    "any_of": [
+                    "all_of": [
                       {
-                        "test": "in_water",
+                        "test": "is_family",
                         "subject": "other",
-                        "operator": "!=",
-                        "value": true
+                        "value": "bastion_invader"
                       },
                       {
-                        "test": "in_water",
-                        "subject": "self",
-                        "value": true
+                        "any_of": [
+                          {
+                            "test": "in_water",
+                            "subject": "other",
+                            "operator": "!=",
+                            "value": true
+                          },
+                          {
+                            "test": "in_water",
+                            "subject": "self",
+                            "value": true
+                          }
+                        ]
                       }
                     ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_squad"
                   }
                 ]
               },
               "max_dist": 24
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "any_of": [
+                          {
+                            "test": "in_water",
+                            "subject": "other",
+                            "operator": "!=",
+                            "value": true
+                          },
+                          {
+                            "test": "in_water",
+                            "subject": "self",
+                            "value": true
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_squad"
+                  }
+                ]
+              },
+              "max_dist": 8
             }
           ],
           "must_reach": true,
@@ -1055,6 +1550,518 @@
         },
         "minecraft:behavior.nearest_prioritized_attackable_target": {
           "priority": 4,
+          "must_see": false,
+          "reselect_targets": true,
+          "persist_time": 0,
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_0"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_1"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_2"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_3"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_4"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_4"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_5"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_5"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_6"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_6"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_7"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_7"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_8"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_8"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_9"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_9"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_10"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_10"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_11"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_11"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_12"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_12"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_13"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_13"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_14"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_14"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_sq_15"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sqmark_15"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "any_of": [
+                          {
+                            "test": "in_water",
+                            "subject": "other",
+                            "operator": "!=",
+                            "value": true
+                          },
+                          {
+                            "test": "in_water",
+                            "subject": "self",
+                            "value": true
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_squad_wait"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "all_of": [
+                          {
+                            "test": "is_family",
+                            "subject": "other",
+                            "value": "monster"
+                          },
+                          {
+                            "test": "has_tag",
+                            "subject": "other",
+                            "value": "bastion_intruder"
+                          }
+                        ]
+                      },
+                      {
+                        "any_of": [
+                          {
+                            "test": "in_water",
+                            "subject": "other",
+                            "operator": "!=",
+                            "value": true
+                          },
+                          {
+                            "test": "in_water",
+                            "subject": "self",
+                            "value": true
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_squad_wait"
+                  }
+                ]
+              },
+              "max_dist": 32,
+              "priority": 2
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "any_of": [
+                          {
+                            "test": "in_water",
+                            "subject": "other",
+                            "operator": "!=",
+                            "value": true
+                          },
+                          {
+                            "test": "in_water",
+                            "subject": "self",
+                            "value": true
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_squad_wait"
+                  }
+                ]
+              },
+              "max_dist": 6,
+              "priority": 2
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_sortie"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_squad_wait"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 3
+            }
+          ],
+          "scan_interval": 40
+        }
+      },
+      "bastion:escort": {
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true,
+          "can_pass_doors": true,
+          "can_open_doors": true,
+          "avoid_water": true
+        },
+        "minecraft:movement.basic": {},
+        "minecraft:behavior.melee_attack": {
+          "priority": 2,
+          "speed_multiplier": 1.15,
+          "track_target": true,
+          "cooldown_time": 1.5
+        },
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 1,
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 48
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 8
+            }
+          ]
+        },
+        "minecraft:behavior.nearest_prioritized_attackable_target": {
+          "priority": 3,
           "must_see": false,
           "reselect_targets": true,
           "persist_time": 0,
@@ -1084,7 +2091,7 @@
                   }
                 ]
               },
-              "max_dist": 256,
+              "max_dist": 6,
               "priority": 0
             },
             {
@@ -1121,7 +2128,7 @@
                   }
                 ]
               },
-              "max_dist": 32,
+              "max_dist": 6,
               "priority": 1
             },
             {
@@ -1154,15 +2161,297 @@
             },
             {
               "filters": {
-                "test": "has_tag",
-                "subject": "other",
-                "value": "bastion_sortie"
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_escort_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_escortmark_0"
+                  }
+                ]
               },
-              "max_dist": 200,
+              "max_dist": 256,
+              "priority": 2
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_escort_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_escortmark_1"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 2
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_escort_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_escortmark_2"
+                  }
+                ]
+              },
+              "max_dist": 256,
+              "priority": 2
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_escort_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_escortmark_3"
+                  }
+                ]
+              },
+              "max_dist": 256,
               "priority": 2
             }
           ],
           "scan_interval": 40
+        }
+      },
+      "bastion:guard": {
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true,
+          "can_pass_doors": true,
+          "can_open_doors": true,
+          "avoid_water": true
+        },
+        "minecraft:movement.basic": {},
+        "minecraft:behavior.melee_attack": {
+          "priority": 2,
+          "speed_multiplier": 1.15,
+          "track_target": true,
+          "cooldown_time": 1.5
+        },
+        "minecraft:behavior.hurt_by_target": {
+          "priority": 1,
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 48
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "any_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "bastion_invader"
+                      },
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 8
+            }
+          ]
+        },
+        "minecraft:behavior.nearest_prioritized_attackable_target": {
+          "priority": 3,
+          "must_see": false,
+          "reselect_targets": true,
+          "persist_time": 0,
+          "entity_types": [
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 10,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "bastion_intruder"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 10,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "monster"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "operator": "!=",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 6,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "bastion_invader"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
+              "priority": 0
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "all_of": [
+                      {
+                        "test": "is_family",
+                        "subject": "other",
+                        "value": "monster"
+                      },
+                      {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "bastion_intruder"
+                      }
+                    ]
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "monster"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_hold_line"
+                  }
+                ]
+              },
+              "max_dist": 5,
+              "priority": 1
+            }
+          ],
+          "scan_interval": 40,
+          "must_reach": true
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 6,
+          "speed_multiplier": 0.6,
+          "xz_dist": 3,
+          "y_dist": 2,
+          "interval": 80
         }
       },
       "bastion:skin_0": {
@@ -1199,8 +2488,10 @@
         "height": 1.9
       },
       "minecraft:health": {
-        "value": 60,
-        "max": 60
+        "value": {
+          "range_min": 54,
+          "range_max": 66
+        }
       },
       "minecraft:movement": {
         "value": 0.29
@@ -1213,7 +2504,10 @@
         "max": 100
       },
       "minecraft:attack": {
-        "damage": 4
+        "damage": {
+          "range_min": 3,
+          "range_max": 5
+        }
       },
       "minecraft:equipment": {
         "table": "loot_tables/entities/ally_soldier_gear.json",
@@ -1332,7 +2626,9 @@
             "bastion:returning",
             "bastion:hold",
             "bastion:retreat",
-            "bastion:sortie"
+            "bastion:sortie",
+            "bastion:escort",
+            "bastion:guard"
           ]
         },
         "add": {
@@ -1348,7 +2644,9 @@
             "bastion:returning",
             "bastion:hold",
             "bastion:retreat",
-            "bastion:sortie"
+            "bastion:sortie",
+            "bastion:escort",
+            "bastion:guard"
           ]
         },
         "add": {
@@ -1364,7 +2662,9 @@
             "bastion:fight",
             "bastion:hold",
             "bastion:retreat",
-            "bastion:sortie"
+            "bastion:sortie",
+            "bastion:escort",
+            "bastion:guard"
           ]
         },
         "add": {
@@ -1380,7 +2680,9 @@
             "bastion:fight",
             "bastion:returning",
             "bastion:retreat",
-            "bastion:sortie"
+            "bastion:sortie",
+            "bastion:escort",
+            "bastion:guard"
           ]
         },
         "add": {
@@ -1396,7 +2698,9 @@
             "bastion:fight",
             "bastion:returning",
             "bastion:hold",
-            "bastion:sortie"
+            "bastion:sortie",
+            "bastion:escort",
+            "bastion:guard"
           ]
         },
         "add": {
@@ -1412,12 +2716,50 @@
             "bastion:fight",
             "bastion:returning",
             "bastion:hold",
-            "bastion:retreat"
+            "bastion:retreat",
+            "bastion:escort",
+            "bastion:guard"
           ]
         },
         "add": {
           "component_groups": [
             "bastion:sortie"
+          ]
+        }
+      },
+      "bastion:escort": {
+        "remove": {
+          "component_groups": [
+            "bastion:patrol",
+            "bastion:fight",
+            "bastion:returning",
+            "bastion:hold",
+            "bastion:retreat",
+            "bastion:sortie",
+            "bastion:guard"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "bastion:escort"
+          ]
+        }
+      },
+      "bastion:guard": {
+        "remove": {
+          "component_groups": [
+            "bastion:patrol",
+            "bastion:fight",
+            "bastion:returning",
+            "bastion:hold",
+            "bastion:retreat",
+            "bastion:sortie",
+            "bastion:escort"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "bastion:guard"
           ]
         }
       }
