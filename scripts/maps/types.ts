@@ -95,6 +95,15 @@ export interface GateDef {
  * Las coordenadas son absolutas del mundo donde está el castillo.
  * Truco para sacarlas: en el juego, `/scriptevent bastion:pos` te dice dónde estás.
  */
+export type PostKind = "front" | "side" | "high";
+
+export interface DefensePost {
+  readonly at: Vec3;
+  readonly kind: PostKind;
+  /** Cuántos caben; por defecto 3 en el frente y 2 en los demás. */
+  readonly capacity?: number;
+}
+
 export interface MapDef {
   readonly id: string;
   readonly name: string;
@@ -106,6 +115,13 @@ export interface MapDef {
    * La brecha del asedio salta cuando se abre el primero.
    */
   readonly gates: readonly GateDef[];
+
+  /**
+   * Muros (y bloqueos, con `block: "barrier"`) de versiones anteriores del mapa. Siguen en pie en los mundos ya
+   * jugados, porque los muros se reponen al reiniciar; al levantar los actuales se quitan sus bloques (solo los
+   * de su material, el terreno no se toca).
+   */
+  readonly retiredWalls?: readonly WallDef[];
 
   /** Dónde aparecen los jugadores al empezar. Se reparten en rotación. */
   readonly playerSpawns: readonly Vec3[];
@@ -121,8 +137,15 @@ export interface MapDef {
 
   readonly siege?: SiegeDef;
 
-  /** Puntos a los que corren los aliados con la orden de retirada. */
+  /** Con la orden de retirada, la reserva: quien no cabe en un puesto de defensa espera aquí (el patio). */
   readonly rallyPoints?: readonly Vec3[];
+
+  /**
+   * Puestos de defensa (máximo 12): con la orden de retirada cada aliado ocupa uno y lo defiende. `front` corta
+   * el paso de los invasores, `side` lo cubre desde un costado y `high` es para los que disparan. Deben poder
+   * alcanzarse a pie desde el patio.
+   */
+  readonly defensePosts?: readonly DefensePost[];
 
   /** Con la orden de ataque, a donde marchan los soldados si no pueden alcanzar a ningún enemigo: junto a la puerta, por dentro. */
   readonly sortiePoint?: Vec3;
@@ -130,10 +153,21 @@ export interface MapDef {
   readonly reinforcements?: ReinforcementsDef;
 
   /**
-   * Ruta a pie de quien cae al agua: hitos en orden (máximo 4, a unos 40 bloques entre sí) que acaban
-   * en el camino normal de los invasores. Se llega andando, nunca por teletransporte. Sin ruta, se quedan donde caen.
+   * Rutas a pie de quien cae al agua (máximo 4). Cada una son hitos en orden (máximo 4, a unos 40 bloques
+   * entre sí): el primero, en una orilla a la altura del agua; el último, en el camino normal. Quien cae elige
+   * la ruta cuya orilla tiene más cerca. Se llega nadando y andando, nunca por teletransporte. Sin rutas, se
+   * quedan donde caen. Para encontrar orillas desde las que se llega a pie, ver `tools/lab/README.md`.
    */
-  readonly returnPath?: readonly Vec3[];
+  readonly returnRoutes?: readonly (readonly Vec3[])[];
+
+  /**
+   * Rutas de subida de los invasores, de sus puntos de aparición hasta la puerta (hitos en orden, máximo 4, a
+   * menos de 30 bloques de camino entre sí). Para los mapas en los que el juego no encuentra solo el camino: desde
+   * lejos lleva a cada soldado al sitio alcanzable más cercano en línea recta, que puede ser el pie de un barranco.
+   * Cada invasor de las oleadas sigue la ruta cuyo primer hito tiene más cerca y, al llegar al último, sigue como
+   * siempre; por el camino pelea con quien tenga cerca. Comparten con `returnRoutes` el máximo de 4 rutas.
+   */
+  readonly approachRoutes?: readonly (readonly Vec3[])[];
 
   readonly waves: readonly WaveDef[];
 

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ALLY_FIGHT_EVENT, ALLY_PATROL_EVENT, ENTITY_IDS, FAMILY, HUNT_TRAILS, huntTrailTag, MAX_RETURN_STAGES, RALLY_TAG, RETURN_EVENT, SOLDIER_MARCH_EVENT, WIZARD_ASSAULT_EVENT, WIZARD_SIEGE_EVENT } from "../scripts/constants";
+import { isUnitId, UNIT_LIST, UNITS } from "../scripts/units/catalog";
+import { ALLY_FIGHT_EVENT, ALLY_PATROL_EVENT, ENTITY_IDS, FAMILY, HUNT_TRAILS, huntTrailTag, INTRUDER_TAG, MAX_POSTS, MAX_RETURN_ROUTES, postMarkerTag, postTag, MAX_RETURN_STAGES, RALLY_TAG, returnWaypointTag, RETURN_EVENT, SOLDIER_MARCH_EVENT, WIZARD_ASSAULT_EVENT, WIZARD_SIEGE_EVENT } from "../scripts/constants";
 
 const readEntity = (name: string) =>
   JSON.parse(readFileSync(`behavior_packs/bastion/entities/${name}.json`, "utf-8"))["minecraft:entity"];
@@ -23,7 +24,7 @@ describe("invader_wizard.json y arcane_bolt.json", () => {
   });
 
   it("los aliados no se queman, pero las explosiones sí les hacen daño", () => {
-    for (const name of ["ally_soldier", "ally_wizard"]) {
+    for (const { id: name } of UNIT_LIST.filter((u) => u.side === "ally")) {
       const triggers = readEntity(name).components["minecraft:damage_sensor"].triggers as { cause?: string; deals_damage?: string }[];
       for (const cause of ["fire", "fire_tick"]) expect(triggers.find((t) => t.cause === cause)?.deals_damage).toBe("no");
       expect(triggers.find((t) => t.cause === "entity_explosion")).toBeUndefined();
@@ -31,7 +32,7 @@ describe("invader_wizard.json y arcane_bolt.json", () => {
   });
 
   it("los invasores ignoran el daño de sus propios proyectiles, explosiones y fuego", () => {
-    for (const name of ["invader_soldier", "invader_wizard"]) {
+    for (const { id: name } of UNIT_LIST.filter((u) => u.side === "invader")) {
       const sensor = JSON.stringify(readEntity(name).components["minecraft:damage_sensor"]);
       expect(sensor).toContain(FAMILY.bolt);
       for (const cause of ["entity_explosion", "fire", "fire_tick"]) expect(sensor).toContain(`"cause":"${cause}"`);
@@ -60,14 +61,15 @@ describe("inteligencia de objetivos", () => {
   });
 
   it("todas las unidades tienen el regreso a pie: pelean cerca y si no van al hito de su tramo", () => {
-    for (const name of ["invader_soldier", "invader_wizard", "ally_soldier", "ally_wizard"]) {
+    for (const { id: name } of UNIT_LIST) {
       const entity = readEntity(name);
       const types = entity.component_groups["bastion:returning"]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types;
       expect(types[0].priority).toBe(0);
       expect(types[0].max_dist).toBeLessThan(types[1].max_dist);
-      expect(types.slice(1)).toHaveLength(MAX_RETURN_STAGES);
-      expect(JSON.stringify(types[MAX_RETURN_STAGES])).toContain(`bastion_stage_${MAX_RETURN_STAGES - 1}`);
-      expect(JSON.stringify(types[MAX_RETURN_STAGES])).toContain(`bastion_wp_${MAX_RETURN_STAGES - 1}`);
+      expect(types.slice(1)).toHaveLength(MAX_RETURN_ROUTES * MAX_RETURN_STAGES);
+      const last = JSON.stringify(types[types.length - 1]);
+      expect(last).toContain(`bastion_stage_${MAX_RETURN_STAGES - 1}`);
+      expect(last).toContain(returnWaypointTag(MAX_RETURN_ROUTES - 1, MAX_RETURN_STAGES - 1));
       expect(entity.events[RETURN_EVENT].add.component_groups).toContain("bastion:returning");
     }
   });
@@ -88,7 +90,7 @@ describe("inteligencia de objetivos", () => {
   it("el mago ataca el muro hasta la brecha y solo entonces a aliados y jugadores", () => {
     const wizard = readEntity("invader_wizard");
     const targets = (group: string) => JSON.stringify(wizard.component_groups[group]["minecraft:behavior.nearest_attackable_target"].entity_types);
-    expect(wizard.events["minecraft:entity_spawned"].add.component_groups).toContain("bastion:siege");
+    expect(wizard.events["minecraft:entity_spawned"].sequence[0].add.component_groups).toContain("bastion:siege");
     expect(targets("bastion:siege")).toContain(FAMILY.aim);
     expect(targets("bastion:siege")).not.toContain(FAMILY.ally);
     expect(targets("bastion:assault")).toContain(FAMILY.ally);
@@ -123,17 +125,25 @@ describe("inteligencia de objetivos", () => {
     expect(JSON.stringify(gate)).toContain(FAMILY.objective);
   });
 
-  it("todas las unidades que caminan saben abrir puertas", () => {
-    for (const name of ["invader_soldier", "invader_wizard", "ally_soldier", "ally_wizard"]) {
-      const components = readEntity(name).components;
-      expect(components["minecraft:navigation.walk"].can_open_doors).toBe(true);
-      expect(components["minecraft:annotation.open_door"]).toBeDefined();
+  it("todas las unidades abren puertas, en tierra evitan el agua y al regresar del agua nadan", () => {
+    for (const { id: name } of UNIT_LIST) {
+      const entity = readEntity(name);
+      expect(entity.components["minecraft:annotation.open_door"]).toBeDefined();
+      expect(entity.components["minecraft:navigation.walk"]).toBeUndefined();
+      for (const [mode, group] of Object.entries<Record<string, any>>(entity.component_groups)) {
+        if (mode.startsWith("bastion:skin_")) continue; // la skin no es un modo: no cambia cómo se mueve
+        const nav = mode === "bastion:returning" ? group["minecraft:navigation.generic"] : group["minecraft:navigation.walk"];
+        expect(nav, `${name} ${mode}`).toBeDefined();
+        expect(nav.can_open_doors).toBe(true);
+        expect(nav.avoid_water).toBe(mode !== "bastion:returning");
+        if (mode === "bastion:returning") expect(nav.can_swim).toBe(true);
+      }
     }
   });
 
   it("los aliados en combate solo eligen invasores alcanzables y vuelven a su puesto", () => {
     const fight = readEntity("ally_soldier").component_groups["bastion:fight"];
-    expect(fight["minecraft:behavior.nearest_attackable_target"].must_reach).toBe(true);
+    expect(fight["minecraft:behavior.nearest_prioritized_attackable_target"].must_reach).toBe(true);
     expect(fight["minecraft:home"]).toBeDefined();
     expect(fight["minecraft:behavior.move_towards_home_restriction"]).toBeDefined();
   });
@@ -149,7 +159,7 @@ describe("ally_wizard.json", () => {
     for (const group of ["bastion:patrol", "bastion:fight"]) {
       const g = wizard.component_groups[group];
       expect(g["minecraft:behavior.ranged_attack"].speed_multiplier).toBe(0);
-      expect(JSON.stringify(g["minecraft:behavior.nearest_attackable_target"].entity_types)).toContain(FAMILY.invader);
+      expect(JSON.stringify(g["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types)).toContain(FAMILY.invader);
     }
   });
 
@@ -164,7 +174,7 @@ describe("ally_wizard.json", () => {
 describe("órdenes a los aliados", () => {
   const groups = ["bastion:patrol", "bastion:fight", "bastion:returning", "bastion:hold", "bastion:retreat", "bastion:sortie"];
 
-  for (const name of ["ally_soldier", "ally_wizard"]) {
+  for (const { id: name } of UNIT_LIST.filter((u) => u.side === "ally")) {
     const entity = readEntity(name);
 
     it(`${name}: cada orden deja activo un solo modo`, () => {
@@ -175,12 +185,27 @@ describe("órdenes a los aliados", () => {
       }
     });
 
-    it(`${name}: al retirarse corre al punto de reunión y solo se defiende de quien tiene encima`, () => {
-      const [foes, rally] = entity.component_groups["bastion:retreat"]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types;
+    it(`${name}: al retirarse corre a su puesto (o al patio) y solo se defiende de quien tiene encima`, () => {
+      const types = entity.component_groups["bastion:retreat"]["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types;
+      const [foes, ...rest] = types;
+      const posts = rest.slice(0, MAX_POSTS);
+      const rally = rest[MAX_POSTS];
       expect(JSON.stringify(foes)).toContain(FAMILY.invader);
       expect(foes.max_dist).toBeLessThanOrEqual(6);
-      expect(foes.priority).toBeLessThan(rally.priority);
+      posts.forEach((post: { priority: number }, i: number) => {
+        expect(JSON.stringify(post)).toContain(postTag(i));
+        expect(JSON.stringify(post)).toContain(postMarkerTag(i));
+        expect(foes.priority).toBeLessThan(post.priority);
+        expect(post.priority).toBeLessThan(rally.priority);
+      });
+      expect(posts).toHaveLength(MAX_POSTS);
       expect(JSON.stringify(rally)).toContain(RALLY_TAG);
+    });
+
+    it(`${name}: al salir va a por los invasores sin límite de distancia`, () => {
+      const hunt = entity.component_groups["bastion:sortie"]["minecraft:behavior.nearest_prioritized_attackable_target"];
+      expect(hunt.entity_types[0].max_dist).toBeGreaterThanOrEqual(200);
+      expect(JSON.stringify(hunt.entity_types[0])).toContain(FAMILY.invader);
     });
 
     it(`${name}: al salir no se queda atado a su puesto y va a por los invasores cercanos`, () => {
@@ -209,13 +234,16 @@ describe("ritmo de combate", () => {
       .map((g) => g["minecraft:behavior.melee_attack"])
       .concat(attacker.components["minecraft:behavior.melee_attack"])
       .find(Boolean);
-    return Math.ceil(defender.components["minecraft:health"].value / attacker.components["minecraft:attack"].damage) * (melee?.cooldown_time ?? 1);
+    // El golpe es el de la ficha: el generador descuenta del daño base lo que suma el arma.
+    if (!isUnitId(attackerName)) throw new Error(attackerName);
+    return Math.ceil(defender.components["minecraft:health"].value / UNITS[attackerName].damage) * (melee?.cooldown_time ?? 1);
   };
 
-  it("un duelo entre soldados dura entre 15 y 30 segundos, sin ser un trámite ni eterno", () => {
+  // Limbers eligió el daño completo de las armas (2026-11-06): duelos de 6 a 10,5 s.
+  it("un duelo entre soldados dura entre 6 y 15 segundos: rápido, pero no un trámite", () => {
     for (const time of [seconds("ally_soldier", "invader_soldier"), seconds("invader_soldier", "ally_soldier")]) {
-      expect(time).toBeGreaterThanOrEqual(15);
-      expect(time).toBeLessThanOrEqual(30);
+      expect(time).toBeGreaterThanOrEqual(6);
+      expect(time).toBeLessThanOrEqual(15);
     }
   });
 
@@ -250,7 +278,7 @@ describe("ally_soldier.json", () => {
   const ally = readEntity("ally_soldier");
 
   it("patrulla al aparecer y pasa a combatir con el evento de brecha", () => {
-    expect(ally.events["minecraft:entity_spawned"].add.component_groups).toContain("bastion:patrol");
+    expect(ally.events["minecraft:entity_spawned"].sequence[0].add.component_groups).toContain("bastion:patrol");
     const fight = ally.events[ALLY_FIGHT_EVENT];
     expect(fight.remove.component_groups).toContain("bastion:patrol");
     expect(fight.add.component_groups).toContain("bastion:fight");
@@ -261,9 +289,9 @@ describe("ally_soldier.json", () => {
     const fight = ally.component_groups["bastion:fight"];
     expect(patrol["minecraft:behavior.melee_attack"]).toBeDefined();
     expect(patrol["minecraft:behavior.hurt_by_target"]).toBeDefined();
-    const near = patrol["minecraft:behavior.nearest_attackable_target"];
+    const near = patrol["minecraft:behavior.nearest_prioritized_attackable_target"];
     expect(near.must_reach).toBe(true);
-    expect(near.entity_types[0].max_dist).toBeLessThan(fight["minecraft:behavior.nearest_attackable_target"].entity_types[0].max_dist);
+    expect(near.entity_types[0].max_dist).toBeLessThan(fight["minecraft:behavior.nearest_prioritized_attackable_target"].entity_types[0].max_dist);
   });
 });
 
@@ -277,7 +305,7 @@ describe("coste de elegir enemigo en batallas grandes", () => {
     }
   };
 
-  for (const name of ["ally_soldier", "ally_wizard", "invader_soldier", "invader_wizard"]) {
+  for (const { id: name } of UNIT_LIST) {
     const entity = readEntity(name);
 
     it(`${name}: solo comprueba si puede llegar a pie a enemigos a 24 bloques o menos (es lo más caro)`, () => {
@@ -298,4 +326,118 @@ describe("coste de elegir enemigo en batallas grandes", () => {
       expect(found).toBeGreaterThan(0);
     });
   }
+});
+
+describe("arqueros y guerrero (cifras elegidas por Limbers, 2026-11-06)", () => {
+  const arrow = (name: string) => JSON.parse(readFileSync(`behavior_packs/bastion/entities/${name}.json`, "utf-8"))["minecraft:entity"];
+
+  it("las flechas hacen 5 (aliada) y 4 (invasora), y desaparecen al chocar", () => {
+    expect(arrow("ally_arrow").components["minecraft:projectile"].on_hit.impact_damage.damage).toBe(5);
+    expect(arrow("invader_arrow").components["minecraft:projectile"].on_hit.impact_damage.damage).toBe(4);
+    for (const name of ["ally_arrow", "invader_arrow"]) expect(arrow(name).components["minecraft:projectile"].on_hit.remove_on_hit).toBeDefined();
+  });
+
+  it("las flechas no hieren a los de su bando", () => {
+    expect(arrow("ally_arrow").components["minecraft:type_family"].family).toContain("bastion_ally_bolt");
+    expect(arrow("invader_arrow").components["minecraft:type_family"].family).toContain(FAMILY.bolt);
+  });
+
+  it("cada arquero dispara su flecha con el ritmo y el alcance de su ficha", () => {
+    for (const [name, projectile, interval, radius] of [
+      ["ally_archer", ENTITY_IDS.allyArrow, [1.5, 2], 24],
+      ["invader_archer", ENTITY_IDS.invaderArrow, [2, 3], 20],
+    ] as const) {
+      const entity = readEntity(name);
+      expect(entity.components["minecraft:shooter"].def).toBe(projectile);
+      const group = entity.component_groups[name === "ally_archer" ? "bastion:hold" : "bastion:march"];
+      const attack = group["minecraft:behavior.ranged_attack"];
+      expect([attack.attack_interval_min, attack.attack_interval_max]).toEqual(interval);
+      expect(attack.attack_radius).toBe(radius);
+      const targeting = group["minecraft:behavior.nearest_attackable_target"] ?? group["minecraft:behavior.nearest_prioritized_attackable_target"];
+      expect(targeting.must_see).toBe(true);
+    }
+  });
+
+  it("el arquero aliado dispara desde su puesto sin moverse", () => {
+    const archer = readEntity("ally_archer");
+    for (const group of ["bastion:patrol", "bastion:fight", "bastion:hold"]) {
+      expect(archer.component_groups[group]["minecraft:behavior.ranged_attack"].speed_multiplier, group).toBe(0);
+    }
+  });
+
+  it("el arquero invasor no apunta a la meta ni al muro: solo a aliados y jugadores", () => {
+    const march = JSON.stringify(readEntity("invader_archer").component_groups["bastion:march"]);
+    expect(march).not.toContain(FAMILY.objective);
+    expect(march).not.toContain(FAMILY.aim);
+  });
+
+  it("los arqueros se apartan de quien se les echa encima antes de seguir disparando", () => {
+    for (const [name, group] of [["ally_archer", "bastion:patrol"], ["ally_archer", "bastion:hold"], ["ally_archer", "bastion:sortie"], ["invader_archer", "bastion:march"]] as const) {
+      const g = readEntity(name).component_groups[group];
+      const avoid = g["minecraft:behavior.avoid_mob_type"];
+      expect(avoid, `${name} ${group}`).toBeDefined();
+      expect(avoid.priority).toBeLessThan(g["minecraft:behavior.ranged_attack"].priority);
+      expect(avoid.remove_target).toBe(false);
+    }
+  });
+
+  it("los arqueros dibujan el arco (attachable); los demás no lo necesitan", () => {
+    for (const unit of UNIT_LIST) {
+      const client = JSON.parse(readFileSync(`resource_packs/bastion/entity/${unit.id}.entity.json`, "utf-8"))["minecraft:client_entity"].description;
+      expect(Boolean(client.enable_attachables), unit.id).toBe(unit.role === "archer");
+    }
+  });
+
+  it("el guerrero aguanta los empujones", () => {
+    expect(readEntity("ally_warrior").components["minecraft:knockback_resistance"].value).toBe(1);
+    expect(UNITS.ally_warrior.health).toBe(80);
+    expect(UNITS.ally_warrior.damage).toBe(13);
+  });
+});
+
+describe("monstruos del juego (creepers, endermen, brujas...)", () => {
+  const ALLIES = ["ally_soldier", "ally_warrior", "ally_wizard", "ally_archer"];
+  const types = (entity: string, group: string, key = "minecraft:behavior.nearest_prioritized_attackable_target") => readEntity(entity).component_groups[group][key].entity_types as Array<Record<string, any>>;
+  const isInvader = (t: Record<string, any>) => JSON.stringify(t.filters).includes(FAMILY.invader);
+  const isMonster = (t: Record<string, any>) => JSON.stringify(t.filters).includes('"monster"');
+
+  it("los aliados los ven a todos como enemigos: ninguna familia de monstruo queda fuera", () => {
+    for (const name of ALLIES) {
+      const text = JSON.stringify(types(name, "bastion:patrol"));
+      expect(text, name).toContain('"monster"');
+      expect(text, name).not.toContain("creeper");
+      expect(text, name).not.toContain("enderman");
+    }
+  });
+
+  it("pero los invasores van antes: los monstruos tienen peor rango en patrulla, combate y defensa", () => {
+    for (const name of ALLIES) {
+      for (const group of ["bastion:patrol", "bastion:fight", "bastion:hold"]) {
+        const list = types(name, group);
+        const invader = Math.min(...list.filter(isInvader).map((t) => t.priority));
+        const monster = Math.min(...list.filter(isMonster).map((t) => t.priority));
+        expect(invader, `${name} ${group}`).toBeLessThan(monster);
+      }
+    }
+  });
+
+  it("a un monstruo se le busca de lejos solo si está en el castillo o ataca a un jugador; si no, solo de cerca", () => {
+    for (const name of ALLIES) {
+      for (const t of types(name, "bastion:fight").filter(isMonster)) {
+        if (!JSON.stringify(t.filters).includes(INTRUDER_TAG)) expect(t.max_dist, name).toBeLessThanOrEqual(6);
+      }
+    }
+  });
+
+  it("con la orden de ataque, cuerpo a cuerpo solo eligen invasores; en la caza, los monstruos van detrás", () => {
+    for (const name of ALLIES) {
+      const near = types(name, "bastion:sortie", "minecraft:behavior.nearest_attackable_target");
+      expect(near.every(isInvader), name).toBe(true);
+      expect(JSON.stringify(near), name).not.toContain('"monster"');
+      const hunt = types(name, "bastion:sortie");
+      const invader = hunt.find(isInvader)!;
+      expect(invader.max_dist).toBe(256);
+      for (const t of hunt.filter(isMonster)) expect(t.priority, name).toBeGreaterThan(invader.priority);
+    }
+  });
 });

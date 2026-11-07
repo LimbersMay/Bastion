@@ -7,17 +7,44 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-05. Versión de los packs: 0.1.24. Rama: `feature/old-fallen-castle`, sin subir. Último commit: el del aligerado.*
+*Última actualización: 2026-11-06. Versión de los packs: 0.1.43. Rama: `feature/old-fallen-castle`, sin subir. Cambios de la Fase 2 sin commitear.*
 
-- **Fase actual:** investigación de la IA, cerrada. Resultados en [IA.md](IA.md); empieza por «Conclusiones» y «Batalla real».
-- **Último cambio:** la caza. Sin meta central, los invasores van a por el enemigo vivo más cercano y se abren camino con una ruta calculada.
-- **Resultado:** la batalla de referencia ya no se estancó: mataron a todos los aliados y derrotaron al jugador hacia el minuto 8, con 126 bloques derribados. Es una sola batalla.
-- **Confirmado por Limbers (2026-11-05):** «se sintió bastante mejor»; rompieron el castillo por un lado e invadieron. Pidió las peleas un poco más frenéticas.
-- **Ajuste de ritmo (v0.1.23), aprobado por Limbers:** golpes cada 1,5 s en lugar de 1,75, y soldados un 12 % más rápidos. Duelos de 15 a 22,5 s.
-- **Aligerado (v0.1.24), sin probar en juego:** Limbers pidió batallas de 300 a 400 por bando y con 400 unidades el servidor iba a 4 ticks/s. Lo más caro era comprobar si se puede llegar a pie a cada enemigo. Ahora solo se comprueba hasta 24 bloques (lo lejano lo resuelve la caza) y se busca enemigo cada 2 s. Con unas 400 unidades pasa de 4,0–4,6 a 7,2–7,7 ticks/s. El asedio de referencia acaba igual. Detalle en [IA.md](IA.md), «Coste en batallas grandes».
-- **Batallas de 400 por bando:** ni con el aligerado caben todas a la vez. Hace falta el tope en el campo con reservas (Fase 4).
-- **Siguiente paso:** empezar la Fase 2, unidades estándar. Limbers la retoma en otra sesión.
-- **Vigilar:** el 73 % de las búsquedas de ruta agotan su límite. La tablet jugó conectada al servidor de la PC, así que falta medir las búsquedas con la partida corriendo dentro de la tablet.
+- **Fase actual:** Fase 2, unidades estándar. Hechas la ficha, el generador, la migración y las armas en la mano.
+- **Fichas (v0.1.25):** cada unidad es una ficha en `scripts/units/catalog.ts` y `npm run units` genera sus archivos. Las 4 unidades salen iguales que antes, comprobado campo por campo. La única diferencia es que el evento de asedio del mago ahora también le quita el modo de asalto. Batalla de referencia sin jugador: 34 aliados y 45 invasores caídos, 146 bloques; antes, 34 y 50, 121 bloques. Mismo resultado.
+- **Armas (v0.1.26), sin ver en juego:** espada de hierro (soldado aliado), hacha de hierro (invasor), vara de blaze (pirómano) y vara de breeze (mago). No se sueltan al morir. El arma suma su daño al golpe (medido en el servidor). El generador hace que el golpe sea siempre el de la ficha.
+- **Daño completo de las armas (v0.1.27), elegido por Limbers, sin probar en juego:** golpe de 10 el soldado aliado y 9 el invasor, antes 4. Duelos de 6 a 10,5 s, antes 15 a 22,5. Al jugador le pegan 9.
+- **Nado al regresar (v0.1.27), sin medir:** mientras regresa del agua, la unidad nada como un ahogado y busca ruta por el agua; en tierra sigue evitándola. El empujón queda como respaldo. Falta la batalla de referencia para compararlo con el empujón solo.
+- **Salir del agua (v0.1.26):** Limbers vio invasores atascados en el lago y pidió una solución (un barco no sirve: las criaturas no lo dirigen). Ahora cada mapa tiene varias rutas de regreso y quien cae elige la orilla más cercana. Un hito solo cuenta fuera del agua, y quien nada 3 s sin acercarse recibe un empujón hacia la orilla. Batalla de referencia: 45 caídas y 45 regresos, con 108 empujones; antes, 38 caídas y 35 regresos.
+- **Puestos de defensa (v0.1.28), sin ver en juego:** con la retirada, cada aliado va a un puesto del castillo (`defensePosts`): cuerpo a cuerpo al frente o a los lados, quien dispara arriba. Lo defiende y vuelve si se aleja más de 16 bloques. Sin puesto libre, espera en el patio. Old Fallen Castle tiene 9 puestos (2 al frente, 4 a los lados, 3 arriba).
+- **Salida sin límite (v0.1.28):** con la orden de ataque van a por el invasor vivo más cercano, esté donde esté (antes, solo hasta 24 bloques).
+- **Balsas (v0.1.28), elegidas por Limbers:** quien cae al agua sube a una balsa que el guion lleva en línea recta a la orilla de su ruta; allí baja con un empujón hacia tierra. El nado y el empujón quedan de respaldo. Batalla de referencia, con Limbers conectado (no es comparable del todo): 45 caídas, 90 balsas, 25 empujones y 35 regresos completos. Que salgan el doble de balsas que caídas indica que muchas atracan antes de tiempo, al chocar con la orilla en línea recta.
+- **Limbers probó la v0.1.28:** las balsas sacan rápido del agua a quien cae. Vio unidades varadas en repisas junto al lago, sin salida a pie porque en tierra evitan el agua; oleadas demasiado pequeñas; el muro mal puesto, en el puente; y aliados que no atacan a zombis ni esqueletos.
+- **Muro en la entrada del castillo (v0.1.29), elegido por Limbers:** el mapa trae una pared de abeto en ruinas donde el puente llega al castillo (x = -14), con un hueco de 6 bloques. El muro de la partida lo cierra (x -16..-14, y 120..125, z -441..-436); con él puesto no se llega a pie del puente al patio. La zona donde se cava acaba justo detrás (x -17), para que nadie rodee el muro cavando. El muro viejo del puente se quita solo al empezar (`retiredWalls`). Meta, aliados iniciales (8 soldados y 2 pirómanos arriba), puestos y salida, detrás del muro; los invasores aparecen en el tramo norte del puente. En el servidor, los 5 magos de la primera oleada lo abrieron unos 40 s después de empezar.
+- **Oleadas grandes (v0.1.29), elegidas por Limbers:** 20 + 5 magos, 40 + 6 y 60 + 8; 12 de tropa de brecha. Refuerzos aliados: 30 por oleada, mínimo 12 en el campo. El tope de magos pasa de 1 de cada 10 a 1 de cada 4.
+- **Varados (v0.1.29):** quien lleva 12 s quieto, sin enemigos a 10 bloques y con agua al lado o debajo de una caída, pasa al regreso (puede nadar); si en 3 s no llega al agua, un empujón hacia ella, y allí le recoge una balsa. Sin medir en juego.
+- **Monstruos (v0.1.29):** los aliados atacan a los monstruos que se acercan (zombis, esqueletos, arañas...), salvo creepers (su explosión rompería el castillo) y endermen (neutrales). Con la orden de ataque no se van a cazarlos lejos. Desde la v0.1.30 también al revés: los aliados llevan la familia del gólem de hierro, la que persiguen zombis, esqueletos y arañas. Comprobado en el servidor: un zombi del desierto mató a un pirómano aliado.
+- **Skins (v0.1.31):** Limbers dijo que las mismas skins aburrían y no iban con el escenario, y dejó la elección a Claude. Ahora salen de The Skindex y cada unidad aparece con una al azar: 4 caballeros aliados, 4 pirómanos con túnica de fuego, 5 orcos guerreros y 4 chamanes orcos o goblins. Origen, autor y retoques de cada una en `docs/SKINS.md`. Ya están elegidas las del guerrero y el arquero aliados; faltan las del arquero invasor (las dos candidatas no se dejaron descargar: Limbers puede bajarlas a mano). Sin licencia de reutilización: antes de publicar hay que pedir permiso a los autores.
+- **Stonehill Castle, el mapa del rush (v0.1.32-0.1.33):** Limbers trajo Ice Castle (aldeas, más accesos), pero es enorme (54 MB, castillo de 290 de alto, caminatas largas); para un rush eligió Stonehill, mediano, que también tenía en `assets/worlds/`. Ice Castle queda para un mapa grande con varios frentes (Fase 6). Análisis del terreno con las reglas del planificador: el castillo tiene una sola entrada a pie, la puerta este, a la que se sube por un camino empedrado desde el valle del noreste. El muro cierra el arco de la puerta (x -284..-282, z 201..212, y 125..130); con él puesto no se llega al patio desde fuera. Los invasores aparecen en el valle, a unos 60 bloques de camino. Pirómanos aliados y jugadores, en el paso de ronda encima de la puerta (y 138). Sin `siege`: las laderas rodean el castillo a la altura del patio y quien cavara allí se saltaría el muro.
+- **Primera prueba en el servidor:** suben en unos 52 s y el muro cae 11 s después del primer disparo (las explosiones prenden fuego y el muro es de madera). En la v0.1.32 el muro tapaba un poste de abeto del mapa; las explosiones lo volaron y la brecha se abrió con 7 bloques rotos, por eso se movió a la cara exterior del arco. Las explosiones rompen madera del mapa y ese daño queda en el mundo entre partidas.
+- **Desde dentro se puede salir saltando** (por ejemplo, entre las almenas de la pasarela oeste), pero no volver a entrar: un aliado que salte queda fuera. Pendiente de ver si pasa en partida.
+- **Limbers probó Stonehill (v0.1.33):** los pirómanos del paso de ronda no hacían nada, y en la retirada los aliados se quedaban golpeando al aire. Origen del mapa: https://mcpedl.com/stonehill-castle-medieval-castle/
+- **Pirómanos donde ven (v0.1.34):** solo disparan a lo que ven a 32 bloques, y desde el paso de ronda no veían ni una casilla (el parapeto tapa la subida; el pasaje queda debajo). Calculadas las líneas de visión sobre el terreno: uno va en lo alto de la torre de la esquina (ve la puerta y algo de la subida; ningún sitio de piedra ve más del 3 % de la subida) y otro al final del pasaje, en el patio (ve casi todo el pasaje). Los puestos de retirada para los que disparan, ahí mismo. Además no los empuja nada (`knockback_resistance`), para que no caigan. En la prueba ya causan bajas.
+- **Retirada sin golpes al aire (v0.1.34):** al llegar a su puesto pasaban a defenderlo, pero el juego no les quitaba el objetivo: el marcador invisible del puesto, al que seguían golpeando (o disparando). Ahora, al llegar alguien, ese marcador se cambia por otro igual: quien lo tenía de objetivo lo pierde. Sin ver en juego.
+- **Invasores asfixiados (v0.1.35):** dos puntos de aparición estaban en el puentecito y junto a la ladera; al salir varios a la vez se empujaban contra los bloques. Ahora están en suelo abierto del valle. Suben en unos 60 s y el muro cae 5 s después del primer disparo.
+- **Limbers probó la v0.1.35:** le gustó cómo se retiran y atacan. Pega: invasores atascados entre bloques o metidos en ellos; acababan llegando, pero se veían bugeados. Aún no hay arqueros (pendientes de sus cifras).
+- **Causa de los atascados: el césped (v0.1.39).** La lista de «decoración que se atraviesa» (`PASSABLE_DECORATION`, en `gate.ts`) buscaba la palabra `grass`, que también está en `grass_block`: el césped contaba como aire. Al buscar sitio para aparecer (o para rescatar), las unidades quedaban con los pies hundidos en el césped, y el rescate no las veía empotradas. Pasaba en el valle de Stonehill (césped) y no en el castillo (piedra). Ahora la lista nombra cada planta (`short_grass`, `tall_grass`...), no confunde los bloques de seta gigante y recoge las flores altas (lilas, peonías), los cultivos, raíles, botones y telarañas, que antes contaban como macizos. Afecta también a la brecha del muro y al cavado de Old Fallen Castle: allí el césped ya se puede derribar.
+- **Ruta de subida (v0.1.37, `approachRoutes`):** desde el valle, el juego llevaba a los soldados al sitio alcanzable más cercano al castillo en línea recta, y algunos se quedaban parados. Los invasores de las oleadas siguen ahora 4 hitos por el camino empedrado (los mismos hitos y etiquetas que el regreso del agua), pelean con quien tengan cerca y, al llegar al último, siguen como siempre. Ningún teletransporte. En la prueba, 25 de 25 subieron por la ruta y el muro cayó en unos 50-60 s.
+- **Rescate de atascados ampliado (v0.1.36, `stuckLogic.ts`):** mira cinco puntos del cuerpo y basta con uno dentro de un bloque macizo (vallas, losas, escaleras y puertas no cuentan). Además, el invasor que lleva 15 s quieto sin pelear, sin disparar a algo a tiro y sin esperar ante el muro se lleva a un sitio libre a pocos bloques, nunca lejos: la subida no se salta. Los sitios libres son siempre el centro de una casilla (v0.1.38). El registro dice qué unidad era y dónde estaba. En los mapas con asedio los soldados quietos siguen cavando como antes.
+- **Guerrero y arqueros (v0.1.41), cifras elegidas por Limbers:** guerrero aliado 80 de vida, 13 de golpe (hacha), velocidad 0,26, no lo empujan. Arquero aliado 30 de vida, flecha de 5 cada 1,5-2 s a 24 bloques, fijo en su puesto. Arquero invasor 24 de vida, flecha de 4 cada 2-3 s a 20 bloques; sube con la oleada (por la ruta), dispara a quien vea y, si no ve a nadie, se acerca al aliado más cercano; nunca apunta a la meta ni al muro. Rol nuevo `archer`, flechas propias (`ally_arrow`, `invader_arrow`: no hieren a los suyos ni rompen el muro; modelo y textura de la flecha del juego) y postura de apuntar (`animation.bastion.humanoid.aim`, con objetivo). Skins: las reservadas de templarios y ballesteros, y una de arquero orco (Orc Archer, Horns of War); faltan más para el arquero invasor.
+- **En Stonehill:** dos guerreros en lugar de dos soldados, pegados al muro; dos arqueros en los dos sitios altos que ven algo. Las oleadas mantienen sus totales, pero parte de los soldados pasan a ser arqueros, tantos como magos: 15+5+5, 34+6+6, 52+8+8. Refuerzos, de cada 10: 5 soldados, 2 guerreros, 2 arqueros, 1 pirómano. Primera prueba: ya hay bajas por flechas en los dos bandos, y los guerreros hicieron 14 de las 36 bajas invasoras. Sin ver en el juego: la postura de apuntar y el aspecto de las flechas (el servidor no dibuja).
+- **Limbers probó la v0.1.41:** las unidades nuevas, de momento solo en Stonehill (no en los otros mapas). Los arqueros salían sin arco: la postura de apuntar sí se veía.
+- **Arco visible y arqueros que mantienen la distancia (v0.1.42):** el arco del juego se dibuja con su propio modelo («attachable», por la cuerda); sin `enable_attachables` en la entidad de cliente no aparece. Las espadas y hachas no lo necesitan. Además, a petición de Limbers, el arquero que tiene un enemigo a menos de 5 bloques se aparta unos 8 (`avoid_mob_type`, por delante del disparo) y vuelve a disparar; acorralado, sin camino, sigue disparando. El aliado, pasado el peligro, vuelve a su sitio (`minecraft:home`, salvo en la retirada).
+- **Limbers probó la v0.1.42:** todo bien (arco y retroceso de los arqueros incluidos).
+- **Monstruos del juego como enemigos (v0.1.43), pedido por Limbers:** los aliados reconocen como enemigos a todos los monstruos, también creepers, endermen y brujas, pero siempre van antes a por los invasores (`nearest_prioritized_attackable_target`: invasores en rango 0, monstruos en rango 1). A un monstruo solo lo buscan si está dentro del castillo o ha atacado a un jugador en los últimos 30 s (etiqueta `bastion_intruder`, que pone `scripts/systems/intruders.ts` cada segundo), o si lo tienen a menos de 6 bloques. La zona del castillo es un cilindro alrededor de los puntos del mapa (aliados, puestos, patio, metas); en Stonehill, 30 bloques de radio. En el servidor: un zombi, un creeper, una bruja y un enderman soltados en el patio murieron en menos de 20 s; un zombi y un esqueleto fuera, en el valle, siguieron vivos. Ojo: el creeper explota y daña a los aliados y al castillo.
+- **Fin de la salida (v0.1.43):** con la orden de ataque salen solo a por los invasores; cuando muere el último y no queda ninguno por salir, vuelven solos a los puestos de defensa (o a los suyos, sin puestos) con un aviso en el chat.
+- **Modo espectador para las pruebas (v0.1.43):** `/scriptevent bastion:spectate on|off`. Con él, el asedio deja a los jugadores en creativo en vez de en supervivencia. `tools/bds.mjs serve` lo activa al arrancar.
+- **Siguiente paso:** Limbers mira en la tablet a los aliados contra los monstruos y la vuelta tras la salida. Pendiente: más skins de arquero invasor.
+- **Vigilar:** el 73 % de las búsquedas de ruta agotan su límite. Falta medirlas con la partida corriendo dentro de la tablet.
 - **Pendiente de decidir:** ver «Decisiones abiertas».
 
 ## Fases
@@ -81,8 +108,8 @@ Batalla de 200 contra 200 (2026-11-05), con el ritmo nuevo: a los 10 minutos que
 
 Limitaciones conocidas:
 
-- Los soldados aliados no cruzan su propio muro: con la orden de ataque esperan en la cubierta hasta que cae.
-- En la retirada desde la cubierta, de 3 a 9 de cada 30 caen al lago por la cornisa y vuelven a pie.
+- Los soldados aliados no cruzan su propio muro: con la orden de ataque esperan detrás hasta que cae.
+- Hasta la v0.1.28 el muro estaba en el puente y, en la retirada desde la cubierta, de 3 a 9 de cada 30 caían al lago. Con el muro en la entrada del castillo (v0.1.29) falta volver a medirlo.
 
 ### En curso: investigación de la IA
 
@@ -110,16 +137,27 @@ La caza:
 - [x] Limbers la prueba en juego y le convence.
 - [ ] Medir el coste de las búsquedas con la partida corriendo dentro de la tablet (POCO Pad, Snapdragon 7s Gen 2, 8 GB).
 
-### Fase 2, unidades estándar
+### En curso: Fase 2, unidades estándar
 
-Una unidad se define con una ficha de datos, y un generador crea sus archivos del juego. Sin esto, cada unidad nueva son cientos de líneas repetidas.
+Una unidad se define con una ficha de datos, y un generador crea sus archivos del juego. Sin esto, cada unidad nueva son cientos de líneas repetidas. Cómo añadir una: [README](../README.md), «Añadir una unidad».
 
-- Ficha por unidad: bando, rol, vida, daño, velocidad, skin, arma y coste.
-- Roles reutilizables: cuerpo a cuerpo, arquero, mago y, más tarde, asedio. El bando decide quiénes son sus enemigos.
-- Los comportamientos comunes (regreso a pie, peleas en el agua) viven en un solo sitio.
-- Migrar las 3 unidades actuales sin cambiar cómo se juegan.
-- Armas en las manos con objetos normales del juego (espada, arco): el modelo aún no tiene dónde sostenerlas. Sin modelado propio.
-- Primeras unidades nuevas: guerrero y arquero aliados, arquero invasor.
+- [x] Ficha por unidad: bando, rol, vida, daño, velocidad, skins, arma y nombres. El coste se añade en la Fase 4, cuando haya presupuesto.
+- [x] Roles reutilizables: cuerpo a cuerpo y mago (`tools/units/roles.ts`). El bando decide quiénes son sus enemigos.
+- [x] Los comportamientos comunes (regreso a pie, peleas en el agua, cada cuánto buscan enemigo) viven en un solo sitio (`tools/units/behavior.ts`).
+- [x] Migrar las 4 unidades actuales sin cambiar cómo se juegan: batalla de referencia igual.
+- [x] Los scripts preguntan a la ficha (bando y rol) en lugar de comparar ids: una unidad nueva no obliga a tocar cada sistema.
+- [x] Armas en las manos con objetos normales del juego, sin cambiar el golpe.
+- [x] Salir del agua: varias orillas, hitos solo fuera del agua y empujón. Herramienta `tools/shores.mjs` para elegir orillas.
+- [x] Ver las armas en la tablet (Limbers).
+- [x] Retirada a puestos de defensa (frente, lados y en alto) y orden de ataque sin límite de distancia.
+- [x] Balsas para salir del agua, con el nado y el empujón de respaldo.
+- [x] Ver en juego las balsas (Limbers): sacan rápido del agua.
+- [ ] Ver en juego los puestos de la retirada (Limbers).
+- [x] Rescate de los varados en repisas junto al agua.
+- [x] Los aliados atacan también a los monstruos del juego.
+- [ ] Rol de arquero: arco en la mano, postura de apuntar y flecha propia que desaparece al chocar.
+- [ ] Primeras unidades nuevas: guerrero y arquero aliados, arquero invasor.
+- [ ] Algo de variación en vida o daño por unidad, para que los duelos no estén decididos de antemano (propuesto en [IA.md](IA.md)).
 
 ### Fase 3, combate orgánico
 
@@ -148,13 +186,14 @@ Para que no se pelee en bolita ni a toda velocidad.
 - Más formas de entrar además de cavar: escaleras de asalto, unidades voladoras o entradas extra.
 - Varias capas de muro, picos y arietes.
 - Reparar el muro durante el descanso.
+- Cuando haya entradas por agua: que unos invasores crucen el lago y otros vayan por tierra (pedido por Limbers, 2026-11-06).
 
 ### Más adelante
 
 - Unidades aéreas y acuáticas, con más frentes en Old Fallen Castle.
 - Civiles que huyen.
 - Modelos y accesorios propios (armaduras, armas a medida) y arte definitivo.
-- Revisar autor y licencia de las skins de `assets/skins/`.
+- Pedir permiso a los autores de las skins (`docs/SKINS.md`) o cambiarlas antes de publicar.
 
 ## Decisiones abiertas
 
@@ -172,8 +211,10 @@ Para que no se pelee en bolita ni a toda velocidad.
 - **La escalera se queda:** cruzar por encima de un muro escalonado es una mecánica válida.
 - **Peleas en el agua:** solo se apunta a quien nada si uno también está en el agua; así nadie se queda mirando el lago desde el puente.
 - **El servidor de prueba se reinicia sin preguntar.**
+- **Salir del agua en balsa:** las criaturas no dirigen un barco, así que la balsa es propia y la lleva el guion. Se suma a las varias orillas de salida y al empujón (elegido por Limbers, 2026-11-06; antes, solo orillas y empujón, 2026-11-05).
+- **Las armas dan su daño completo (2026-11-06):** golpe de 10 y 9 en los soldados. La ficha guarda el golpe total y el generador descuenta lo que suma el arma del daño base, así que cambiar de arma no cambia el golpe sin querer.
 - **Comprobar el camino solo de cerca:** `must_reach` solo hasta 24 bloques y búsqueda de enemigo cada 2 s, porque era lo que más pesaba en batallas grandes. Elegido por Limbers entre tres opciones (2026-11-05).
-- **Ritmo de las peleas:** ni tan frenético como al principio ni lento; un duelo entre soldados dura unos 15 a 30 segundos. Tras probar la caza, Limbers lo pidió un poco más rápido (v0.1.23: 15 a 22,5 s).
+- **Ritmo de las peleas:** un duelo entre soldados dura de 6 a 10,5 s desde la v0.1.27, con el daño completo de las armas. Antes: 15 a 30 s, y 15 a 22,5 s desde la v0.1.23.
 - **Aliados inmunes al fuego:** causaba cerca de dos tercios de sus bajas y los invasores ya eran inmunes. La explosión sí les hace daño.
 - **Piromanos escasos:** unos 8 a 10 de cada 80 unidades, porque hacen mucho daño y destrozan el mapa.
 - **Los soldados derriban paredes solo en la zona del castillo:** ni el puente ni la orilla.

@@ -8,10 +8,11 @@ import type { MapDef } from "./types";
  * llega por un largo puente de piedra que sale de su lado este y baja en arco hacia el sur hasta la orilla
  * (z ≈ -340). El puente mide unos 10 bloques de ancho, con un borde bajo a cada lado.
  *
- * Puerta: un muro de madera de tres bloques de grosor que cruza todo el puente en z = -417..-415 (cubierta x 34..42,
- * lisa en y = 112, de pie en y = 113; el muro llega hasta x 32..44 para tapar los pretiles y repisas de los lados). Detrás va la meta invisible de los invasores; el punto de
- * referencia está 2,5 bloques al sur del muro, hacia donde vienen. Los
- * defensores esperan al norte, en el tramo más alto del puente (cubierta en y = 113, de pie en y = 114).
+ * Puerta: la entrada este del castillo, donde llega el puente. El mapa trae ahí una pared de madera de abeto en
+ * ruinas (x = -14, de y 120 hacia arriba) con un hueco de 6 bloques (z -441..-436); el muro de la partida lo
+ * cierra: madera de roble oscuro de tres bloques de grosor (x -16..-14) y 6 de alto (y 120..125). Con el muro
+ * puesto no se llega a pie del puente al patio (comprobado sobre el terreno real). Delante queda el rellano al
+ * que sube el puente; detrás, el pasillo que baja al patio, con los puestos de defensa.
  *
  * Por ahora solo hay un frente (el puente). Cuando existan unidades acuáticas o aéreas, los otros
  * accesos (agua, laterales) se añaden como más puertas o puntos de entrada.
@@ -24,27 +25,27 @@ export const oldFallenCastle: MapDef = {
 
   gates: [
     {
-      id: "bridge",
-      position: { x: 38.5, y: 113, z: -412.5 },
+      id: "gate",
+      // En el rellano, delante del muro, donde llegan los invasores.
+      position: { x: -10.5, y: 120, z: -438.5 },
       // Meta invisible de los invasores, detrás del muro: les da un sitio al que ir y a los magos a quién apuntar.
-      objective: { x: 37.5, y: 114, z: -419.5 },
-      // Un muro de tres bloques de grosor que cierra el puente; los proyectiles de los magos lo deshacen por partes.
-      // Va de x 32 a 44 (más ancho que la cubierta, x 34..42) porque el puente tiene a cada lado un pretil bajo y una
-      // repisa que siguen de largo; con el muro más corto los soldados rodeaban por ahí. Solo se rellena el aire.
-      walls: [{ from: { x: 32, y: 113, z: -417 }, to: { x: 44, y: 116, z: -415 }, block: "dark_oak_planks" }],
-      // Los pretiles del lado norte llegan casi a lo alto del muro: sin esto los aliados suben por ahí, cruzan
-      // por encima y caen al lago. Los invasores no se ven afectados: bajan del muro por el centro.
-      blockers: [
-        { from: { x: 31, y: 114, z: -418 }, to: { x: 32, y: 119, z: -418 } },
-        { from: { x: 42, y: 114, z: -418 }, to: { x: 43, y: 119, z: -418 } },
-      ],
-      // Detrás del muro, en el puente, a ambos lados del centro.
+      objective: { x: -20.5, y: 120, z: -438.5 },
+      // Cierra el hueco de la pared en ruinas. Solo se rellena el aire: la madera de abeto del mapa queda igual.
+      walls: [{ from: { x: -16, y: 120, z: -441 }, to: { x: -14, y: 125, z: -436 }, block: "dark_oak_planks" }],
+      // Detrás del muro, en el pasillo.
       breachSpawns: [
-        { x: 35.5, y: 114, z: -419.5 },
-        { x: 39.5, y: 114, z: -419.5 },
+        { x: -19.5, y: 120, z: -439.5 },
+        { x: -19.5, y: 120, z: -436.5 },
       ],
-      breachTroops: [{ unit: "invader_soldier", count: 8 }],
+      breachTroops: [{ unit: "invader_soldier", count: 12 }],
     },
+  ],
+
+  // El muro y los bloqueos invisibles de cuando la puerta estaba en el puente (hasta la v0.1.28).
+  retiredWalls: [
+    { from: { x: 32, y: 113, z: -417 }, to: { x: 44, y: 116, z: -415 }, block: "dark_oak_planks" },
+    { from: { x: 31, y: 114, z: -418 }, to: { x: 32, y: 119, z: -418 }, block: "barrier" },
+    { from: { x: 42, y: 114, z: -418 }, to: { x: 43, y: 119, z: -418 }, block: "barrier" },
   ],
 
   // En el techo central, el punto ancho más alto: desde aquí se ve toda la batalla. Las agujas más altas son vallas de un bloque.
@@ -54,18 +55,26 @@ export const oldFallenCastle: MapDef = {
     { x: -47.5, y: 143, z: -425.5 },
   ],
 
+  // Detrás del muro, en el pasillo; los dos pirómanos, arriba, desde donde ven el rellano.
   allies: [
-    { unit: "ally_soldier", position: { x: 33.5, y: 114, z: -424.5 } },
-    { unit: "ally_soldier", position: { x: 37.5, y: 114, z: -424.5 } },
-    { unit: "ally_soldier", position: { x: 35.5, y: 114, z: -421.5 } },
-    { unit: "ally_soldier", position: { x: 37.5, y: 114, z: -422.5 } },
+    { unit: "ally_soldier", position: { x: -18.5, y: 120, z: -443.5 } },
+    { unit: "ally_soldier", position: { x: -20.5, y: 120, z: -443.5 } },
+    { unit: "ally_soldier", position: { x: -22.5, y: 121, z: -442.5 } },
+    { unit: "ally_soldier", position: { x: -18.5, y: 120, z: -441.5 } },
+    { unit: "ally_soldier", position: { x: -21.5, y: 120, z: -440.5 } },
+    { unit: "ally_soldier", position: { x: -23.5, y: 121, z: -439.5 } },
+    { unit: "ally_soldier", position: { x: -21.5, y: 120, z: -436.5 } },
+    { unit: "ally_soldier", position: { x: -23.5, y: 121, z: -436.5 } },
+    { unit: "ally_wizard", position: { x: -18.5, y: 130, z: -426.5 } },
+    { unit: "ally_wizard", position: { x: -29.5, y: 130, z: -422.5 } },
   ],
 
-  // En el puente y la orilla sur, a 45-58 bloques de la puerta (el alcance de la IA invasora es 80).
+  // En el tramo norte del puente, a 52-58 bloques del muro (el alcance de la IA invasora es 80).
   invaderSpawns: [
-    { x: 49.5, y: 108, z: -368.5 },
-    { x: 51.5, y: 107, z: -362.5 },
-    { x: 54.5, y: 107, z: -356.5 },
+    { x: 35.5, y: 114, z: -419.5 },
+    { x: 39.5, y: 114, z: -419.5 },
+    { x: 37.5, y: 114, z: -424.5 },
+    { x: 38.5, y: 113, z: -412.5 },
   ],
 
   // Laderas norte y oeste: sin camino al castillo, así que quien sale por aquí se abre paso derribando la roca y las paredes.
@@ -75,19 +84,38 @@ export const oldFallenCastle: MapDef = {
   ],
 
   siege: {
-    // Todo el castillo y sus laderas, sin el puente (x 32 en adelante) ni la orilla del lago: no tiene sentido romper eso.
-    zone: { from: { x: -125, y: 90, z: -510 }, to: { x: 28, y: 145, z: -395 } },
+    // Todo el castillo y sus laderas hasta justo detrás del muro (x -17), sin la entrada ni el puente: mientras
+    // el muro aguante, por ahí no se cava alrededor; hay que romperlo.
+    zone: { from: { x: -125, y: 90, z: -510 }, to: { x: -17, y: 145, z: -395 } },
   },
 
-  // Patio central, conectado a pie con la cubierta norte del puente.
+  // Puestos de la retirada, a lo largo del pasillo que baja del muro al patio. Todos se alcanzan a pie desde el
+  // patio con el muro puesto (recorrido calculado sobre el terreno real).
+  defensePosts: [
+    // Pegados al muro por dentro: cortan el paso cuando se abra.
+    { at: { x: -17.5, y: 120, z: -440.5 }, kind: "front" },
+    { at: { x: -17.5, y: 120, z: -437.5 }, kind: "front" },
+    // A los lados del pasillo.
+    { at: { x: -19.5, y: 120, z: -441.5 }, kind: "side" },
+    { at: { x: -20.5, y: 120, z: -437.5 }, kind: "side" },
+    { at: { x: -26.5, y: 121, z: -432.5 }, kind: "side" },
+    { at: { x: -34.5, y: 122, z: -441.5 }, kind: "side" },
+    { at: { x: -33.5, y: 123, z: -431.5 }, kind: "side" },
+    // En lo alto, a 10-14 bloques del pasillo.
+    { at: { x: -18.5, y: 130, z: -426.5 }, kind: "high" },
+    { at: { x: -29.5, y: 130, z: -422.5 }, kind: "high" },
+    { at: { x: -44.5, y: 130, z: -426.5 }, kind: "high" },
+  ],
+
+  // Patio central, conectado a pie con la cubierta norte del puente: la reserva de la retirada.
   rallyPoints: [
     { x: -50.5, y: 124, z: -435.5 },
     { x: -47.5, y: 124, z: -439.5 },
     { x: -45.5, y: 124, z: -429.5 },
   ],
 
-  // Cubierta norte del puente, junto al muro: desde aquí salen en cuanto se abre.
-  sortiePoint: { x: 37.5, y: 114, z: -422.5 },
+  // Detrás del muro: desde aquí salen en cuanto se abre.
+  sortiePoint: { x: -18.5, y: 120, z: -438.5 },
 
   reinforcements: {
     spawns: [
@@ -98,46 +126,57 @@ export const oldFallenCastle: MapDef = {
     ],
     // Uno de cada diez es pirómano, igual que en las oleadas enemigas.
     units: ["ally_soldier", "ally_soldier", "ally_soldier", "ally_soldier", "ally_soldier", "ally_wizard", "ally_soldier", "ally_soldier", "ally_soldier", "ally_soldier"],
-    minField: 6,
-    reservePerWave: 12,
-    batch: 2,
-    everySeconds: 6,
+    minField: 12,
+    reservePerWave: 30,
+    batch: 3,
+    everySeconds: 5,
   },
 
-  // Del lago a la orilla sur, ladera arriba y de vuelta al puente (ruta calculada sobre el terreno real).
-  returnPath: [
-    { x: 60.5, y: 80, z: -381.5 },
-    { x: 57.5, y: 106, z: -350.5 },
-    { x: 50.5, y: 108, z: -363.5 },
+  // Del lago al puente, ladera arriba (rutas calculadas sobre el terreno real). Son las dos únicas orillas
+  // desde las que se sube a pie sin romper nada: la sureste y la este.
+  returnRoutes: [
+    [
+      { x: 60.5, y: 80, z: -381.5 },
+      { x: 57.5, y: 106, z: -350.5 },
+      { x: 50.5, y: 108, z: -363.5 },
+    ],
+    [
+      { x: 86.5, y: 80, z: -419.5 },
+      { x: 97.5, y: 93, z: -423.5 },
+      { x: 85.5, y: 113, z: -385.5 },
+      { x: 60.5, y: 107, z: -352.5 },
+    ],
   ],
 
+  // Oleadas grandes (elegidas por Limbers, 2026-11-06): de 25 a 68 invasores, con magos desde la primera
+  // para abrir el muro pronto.
   waves: [
     {
       name: "Exploradores",
       groups: [
-        { unit: "invader_soldier", count: 7 },
-        { unit: "invader_wizard", count: 1 },
+        { unit: "invader_soldier", count: 20 },
+        { unit: "invader_wizard", count: 5 },
       ],
-      batchSize: 3,
+      batchSize: 5,
       batchIntervalTicks: 50,
     },
     {
       name: "Asalto",
       groups: [
-        { unit: "invader_soldier", count: 13 },
-        { unit: "invader_wizard", count: 1 },
+        { unit: "invader_soldier", count: 40 },
+        { unit: "invader_wizard", count: 6 },
       ],
-      batchSize: 4,
-      batchIntervalTicks: 60,
+      batchSize: 6,
+      batchIntervalTicks: 50,
     },
     {
       name: "Gran ofensiva",
       groups: [
-        { unit: "invader_soldier", count: 20 },
-        { unit: "invader_wizard", count: 2 },
+        { unit: "invader_soldier", count: 60 },
+        { unit: "invader_wizard", count: 8 },
       ],
-      batchSize: 5,
-      batchIntervalTicks: 60,
+      batchSize: 8,
+      batchIntervalTicks: 50,
     },
   ],
 

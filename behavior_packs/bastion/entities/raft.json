@@ -1,0 +1,74 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "bastion:raft",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "bastion_raft",
+          "inanimate"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 1.4,
+        "height": 0.45
+      },
+      "minecraft:health": {
+        "value": 20,
+        "max": 20
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1
+      },
+      "minecraft:physics": {
+        "has_gravity": true,
+        "has_collision": true
+      },
+      "minecraft:buoyant": {
+        "base_buoyancy": 1.0,
+        "apply_gravity": true,
+        "simulate_waves": false,
+        "big_wave_probability": 0,
+        "drag_down_on_buoyancy_removed": 0.0,
+        "liquid_blocks": [
+          "minecraft:water",
+          "minecraft:flowing_water"
+        ]
+      },
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:rideable": {
+        "seat_count": 1,
+        "family_types": [
+          "bastion_unit"
+        ],
+        "pull_in_entities": false,
+        "rider_can_interact": false,
+        "seats": [
+          {
+            "position": [
+              0,
+              0.25,
+              0
+            ]
+          }
+        ]
+      },
+      "minecraft:fire_immune": {},
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "deals_damage": "no"
+          }
+        ]
+      }
+    }
+  }
+}

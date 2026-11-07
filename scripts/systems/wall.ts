@@ -25,6 +25,16 @@ function fill(dimension: Dimension, wall: WallDef): void {
   }
 }
 
+/** Quita un muro de una versión anterior del mapa: sus bloques (solo los de su material) pasan a aire. */
+export function removeRetiredWall(dimension: Dimension, wall: WallDef): void {
+  const { min, max } = normalizeBox(wall);
+  try {
+    dimension.runCommand(`fill ${min.x} ${min.y} ${min.z} ${max.x} ${max.y} ${max.z} air replace ${wall.block}`);
+  } catch {
+    // Zona sin cargar o sin bloques de ese material: nada que quitar.
+  }
+}
+
 /** `true` si el bloque de esa posición cuenta como sólido (lo no cargado cuenta como sólido). */
 function isSolidAt(dimension: Dimension, x: number, y: number, z: number): boolean {
   try {

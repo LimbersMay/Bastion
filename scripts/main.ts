@@ -1,11 +1,12 @@
 import { Player, system, world } from "@minecraft/server";
-import { ENTITY_IDS, MENU_ITEM_ID, NAMESPACE, PROP_ACTIVE_MAP, RETREAT_ITEM_ID, SORTIE_ITEM_ID } from "./constants";
+import { ENTITY_IDS, MENU_ITEM_ID, NAMESPACE, PROP_ACTIVE_MAP, PROP_SPECTATE, RETREAT_ITEM_ID, SORTIE_ITEM_ID } from "./constants";
 import { SiegeManager } from "./game/siegeManager";
 import { defaultMap, findMap, MAPS } from "./maps";
 import { validateMap } from "./maps/validate";
 import { giveMenuItem, hasMenuItem } from "./systems/loadout";
 import { S } from "./strings";
 import { openMainMenu } from "./ui/menus";
+import { unitOf, UNIT_LIST } from "./units/catalog";
 
 let manager: SiegeManager | undefined;
 
@@ -81,6 +82,14 @@ function handleScriptEvent(id: string, message: string, source: Player | undefin
       else source?.sendMessage(S.scriptHelp);
       break;
     }
+    case "spectate": {
+      const on = message.trim() !== "off";
+      world.setDynamicProperty(PROP_SPECTATE, on);
+      manager.refreshGameModes();
+      console.log(`[bastion] Modo espectador ${on ? "activado" : "desactivado"}.`);
+      world.sendMessage(on ? S.spectateOn : S.spectateOff);
+      break;
+    }
     case "pos":
       if (source) {
         const { x, y, z } = source.location;
@@ -149,13 +158,25 @@ world.afterEvents.entityDie.subscribe(
   (ev) => {
     try {
       const { damageSource: source, deadEntity } = ev;
-      const side = deadEntity.typeId === ENTITY_IDS.allySoldier || deadEntity.typeId === ENTITY_IDS.allyWizard ? "ally" : "invader";
+      const side = unitOf(deadEntity.typeId)?.side ?? "invader";
       manager?.onUnitDied(side, source.cause, source.damagingProjectile?.typeId ?? source.damagingEntity?.typeId);
     } catch (e) {
       console.warn(`[bastion] Error al anotar una baja: ${e}`);
     }
   },
-  { entityTypes: [ENTITY_IDS.allySoldier, ENTITY_IDS.allyWizard, ENTITY_IDS.invaderSoldier, ENTITY_IDS.invaderWizard] }
+  { entityTypes: UNIT_LIST.map((u) => u.entityId) }
+);
+
+// Un monstruo del juego que ataca a un jugador pasa a ser objetivo de los aliados.
+world.afterEvents.entityHurt.subscribe(
+  (ev) => {
+    try {
+      manager?.onPlayerHurt(ev.damageSource.damagingEntity);
+    } catch (e) {
+      console.warn(`[bastion] Error al procesar un golpe a un jugador: ${e}`);
+    }
+  },
+  { entityTypes: ["minecraft:player"] }
 );
 
 // Cada muerte de un jugador gasta una vida del equipo.

@@ -1,15 +1,17 @@
-import { GameMode, system, world, type Dimension, type Player } from "@minecraft/server";
-import { LOGIC_INTERVAL_TICKS, TICKING_AREA_NAME, TICKS_PER_SECOND } from "../constants";
+import { GameMode, system, world, type Dimension, type Entity, type Player } from "@minecraft/server";
+import { LOGIC_INTERVAL_TICKS, PROP_SPECTATE, TICKING_AREA_NAME, TICKS_PER_SECOND } from "../constants";
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
 import { aliveAllies, healAlly, unleashAllies } from "../systems/allies";
 import { CasualtyLog, type Side } from "../systems/casualties";
 import { describeGateTerrain, findAimPoint, findObjective, gateTerrainMatches, invaderAtObjective, isAreaLoaded, moveAimPoint, spawnObjective } from "../systems/gate";
+import { Intruders } from "../systems/intruders";
 import { giveLoadout } from "../systems/loadout";
 import { AllyOrders, ensureRallyPoints, type AllyOrder } from "../systems/orders";
 import { Reinforcements, type ReinforcementTuning } from "../systems/reinforcements";
+import { clearRafts } from "../systems/rafts";
 import { ensureWaypoints, guideReturns } from "../systems/returnPath";
 import { Sappers } from "../systems/sappers";
-import { biteWalls, countWall, findGateOpening, pickAimSpot, placeWalls } from "../systems/wall";
+import { biteWalls, countWall, findGateOpening, pickAimSpot, placeWalls, removeRetiredWall } from "../systems/wall";
 import { integrityPercent } from "../systems/wallLogic";
 import { WaveSpawner } from "../systems/waveSpawner";
 import { S } from "../strings";
@@ -46,6 +48,7 @@ export class SiegeManager {
   private orders: AllyOrders;
   private reinforcements: Reinforcements;
   private sappers: Sappers;
+  private intruders: Intruders;
   private dimension: Dimension;
   private lastOrderTick = -ORDER_COOLDOWN_TICKS;
   private readonly casualties = new CasualtyLog();
@@ -68,6 +71,7 @@ export class SiegeManager {
     this.orders = new AllyOrders(this.dimension, map);
     this.reinforcements = new Reinforcements(map);
     this.sappers = new Sappers(this.dimension, map);
+    this.intruders = new Intruders(this.dimension, map);
   }
 
   private static configFor(map: MapDef): SiegeConfig {
@@ -124,6 +128,7 @@ export class SiegeManager {
     this.orders = new AllyOrders(this.dimension, map);
     this.reinforcements = new Reinforcements(map);
     this.sappers = new Sappers(this.dimension, map);
+    this.intruders = new Intruders(this.dimension, map);
   }
 
   /**
@@ -202,20 +207,31 @@ export class SiegeManager {
 
   reset(): void {
     this.spawner.clear();
+    clearRafts(this.dimension);
     this.opened.clear();
     this.orders.reset();
     this.reinforcements.reset();
     this.sappers.restore();
+    this.intruders.clear();
     this.raiseWalls();
     this.dispatch({ type: "reset" });
     this.restoreGameModes();
     for (const player of world.getAllPlayers()) player.onScreenDisplay.setActionBar("");
   }
 
-  /** El asedio se juega en supervivencia: en creativo los enemigos ni te atacan. */
+  /**
+   * El asedio se juega en supervivencia: en creativo los enemigos ni te atacan. Con el modo espectador
+   * (`/scriptevent bastion:spectate on`, para las pruebas) se queda en creativo y mira.
+   */
   private enlist(player: Player): void {
     if (!this.previousModes.has(player.id)) this.previousModes.set(player.id, player.getGameMode());
-    player.setGameMode(GameMode.Survival);
+    player.setGameMode(world.getDynamicProperty(PROP_SPECTATE) === true ? GameMode.Creative : GameMode.Survival);
+  }
+
+  /** Al cambiar el modo espectador con un asedio en marcha: aplica el modo nuevo a quien ya juega. */
+  refreshGameModes(): void {
+    if (!isActive(this.state.phase)) return;
+    for (const player of world.getAllPlayers()) this.enlist(player);
   }
 
   private restoreGameModes(): void {
@@ -260,6 +276,11 @@ export class SiegeManager {
     if (isActive(this.state.phase)) this.casualties.record(side, cause, killerId);
   }
 
+  /** Lo llama main.ts cuando algo hiere a un jugador: si es un monstruo, los aliados van a por él. */
+  onPlayerHurt(attacker: Entity | undefined): void {
+    if (isActive(this.state.phase)) this.intruders.onPlayerHurt(attacker);
+  }
+
   /** Lo llama main.ts cuando muere un jugador. */
   onPlayerDied(): void {
     this.dispatch({ type: "playerDied" });
@@ -302,11 +323,13 @@ export class SiegeManager {
     this.ensureObjectives();
     this.moveAimPoints();
     this.checkGates();
-    this.spawner.rescueStuck();
+    this.spawner.rescueStuck(this.state.breached);
     ensureWaypoints(this.dimension, this.map);
     ensureRallyPoints(this.dimension, this.map);
     guideReturns(this.dimension, this.map, this.state.breached, (ally) => this.orders.applyTo(ally, this.state.breached));
     this.orders.tick();
+    this.intruders.tick();
+    this.checkSortieDone();
     if (this.state.phase === "wave") {
       this.sendReinforcements();
       this.digThroughWalls();
@@ -341,6 +364,7 @@ export class SiegeManager {
 
   /** Levanta (o repone) los muros de todas las puertas y anota con cuántos bloques empieza cada una. */
   private raiseWalls(): void {
+    for (const wall of this.map.retiredWalls ?? []) removeRetiredWall(this.dimension, wall);
     for (const gate of this.map.gates) {
       if (!this.gateLoaded(gate)) continue;
       this.wallTotals.set(gate.id, placeWalls(this.dimension, gate));
@@ -403,6 +427,18 @@ export class SiegeManager {
     if (result.broken === 0) return;
     console.log(`[bastion] Proyectil en ${hit.x},${hit.y},${hit.z}: ${result.broken} bloques de muro rotos (puerta ${result.gate?.id}).`);
     this.checkGates();
+  }
+
+  /**
+   * La orden de ataque es contra los invasores: cuando no queda ninguno (ni por salir), los aliados vuelven al
+   * castillo, a sus puestos de defensa si el mapa los tiene y si no a los suyos.
+   */
+  private checkSortieDone(): void {
+    if (this.orders.current !== "sortie" || this.spawner.pending > 0 || this.spawner.aliveInvaders() > 0) return;
+    const order = this.orders.canRetreat ? "retreat" : "defend";
+    const reached = this.orders.give(order, this.state.breached);
+    console.log(`[bastion] Sin invasores: fin de la orden de ataque (${order}, ${reached} aliados).`);
+    world.sendMessage(S.sortieDone);
   }
 
   private checkWaveCleared(): void {

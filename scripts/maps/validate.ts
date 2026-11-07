@@ -1,5 +1,5 @@
 import type { MapDef, Vec3 } from "./types";
-import { MAX_RETURN_STAGES } from "../constants";
+import { MAX_POSTS, MAX_RETURN_ROUTES, MAX_RETURN_STAGES } from "../constants";
 import { isUnitId } from "../units/catalog";
 import { boxVolume, inBox } from "../systems/wallLogic";
 
@@ -50,8 +50,15 @@ export function validateMap(map: MapDef): string[] {
       if (!Number.isInteger(t.count) || t.count < 0) err(`${label}.breachTroops[${i}]: cantidad inválida.`);
     });
   });
-  if ((map.returnPath?.length ?? 0) > MAX_RETURN_STAGES) err(`returnPath: máximo ${MAX_RETURN_STAGES} hitos.`);
-  map.returnPath?.forEach((p, i) => checkVec(`returnPath[${i}]`, p));
+  if ((map.returnRoutes?.length ?? 0) + (map.approachRoutes?.length ?? 0) > MAX_RETURN_ROUTES) {
+    err(`returnRoutes + approachRoutes: máximo ${MAX_RETURN_ROUTES} rutas entre las dos.`);
+  }
+  for (const [name, routes] of [["returnRoutes", map.returnRoutes], ["approachRoutes", map.approachRoutes]] as const) {
+    routes?.forEach((route, r) => {
+      if (route.length === 0 || route.length > MAX_RETURN_STAGES) err(`${name}[${r}]: de 1 a ${MAX_RETURN_STAGES} hitos.`);
+      route.forEach((p, i) => checkVec(`${name}[${r}][${i}]`, p));
+    });
+  }
 
   if (map.playerSpawns.length === 0) err("playerSpawns necesita al menos un punto.");
   map.playerSpawns.forEach((v, i) => checkVec(`playerSpawns[${i}]`, v));
@@ -67,6 +74,11 @@ export function validateMap(map: MapDef): string[] {
   }
   map.rallyPoints?.forEach((v, i) => checkVec(`rallyPoints[${i}]`, v));
   if (map.sortiePoint) checkVec("sortiePoint", map.sortiePoint);
+  if ((map.defensePosts?.length ?? 0) > MAX_POSTS) err(`defensePosts: máximo ${MAX_POSTS} puestos.`);
+  map.defensePosts?.forEach((post, i) => {
+    checkVec(`defensePosts[${i}].at`, post.at);
+    if (post.capacity !== undefined && (!Number.isInteger(post.capacity) || post.capacity < 1)) err(`defensePosts[${i}].capacity: un entero de 1 o más.`);
+  });
 
   const r = map.reinforcements;
   if (r) {

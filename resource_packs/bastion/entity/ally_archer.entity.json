@@ -1,0 +1,46 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "bastion:ally_archer",
+      "enable_attachables": true,
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "skin_0": "textures/entity/ally_archer_0",
+        "skin_1": "textures/entity/ally_archer_1",
+        "skin_2": "textures/entity/ally_archer_2",
+        "skin_3": "textures/entity/ally_archer_3"
+      },
+      "geometry": {
+        "default": "geometry.bastion.humanoid"
+      },
+      "animations": {
+        "look_at_target": "controller.animation.humanoid.look_at_target",
+        "look_at_target_default": "animation.humanoid.look_at_target.default",
+        "look_at_target_gliding": "animation.humanoid.look_at_target.gliding",
+        "look_at_target_swimming": "animation.humanoid.look_at_target.swimming",
+        "walk": "animation.bastion.humanoid.walk",
+        "attack": "animation.bastion.humanoid.attack",
+        "aim": "animation.bastion.humanoid.aim"
+      },
+      "scripts": {
+        "animate": [
+          "look_at_target",
+          "walk",
+          {
+            "aim": "query.has_target"
+          }
+        ]
+      },
+      "render_controllers": [
+        "controller.render.bastion.ally_archer"
+      ],
+      "spawn_egg": {
+        "base_color": "#2f5a2a",
+        "overlay_color": "#c9b27a"
+      }
+    }
+  }
+}

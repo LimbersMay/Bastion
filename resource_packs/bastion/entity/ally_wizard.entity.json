@@ -7,7 +7,10 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/entity/ally_wizard"
+        "skin_0": "textures/entity/ally_wizard_0",
+        "skin_1": "textures/entity/ally_wizard_1",
+        "skin_2": "textures/entity/ally_wizard_2",
+        "skin_3": "textures/entity/ally_wizard_3"
       },
       "geometry": {
         "default": "geometry.bastion.humanoid"
@@ -30,7 +33,7 @@
         ]
       },
       "render_controllers": [
-        "controller.render.bastion.default"
+        "controller.render.bastion.ally_wizard"
       ],
       "spawn_egg": {
         "base_color": "#1c3f8c",

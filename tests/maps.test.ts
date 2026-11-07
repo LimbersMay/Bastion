@@ -73,13 +73,31 @@ describe("validateMap: muros y meta", () => {
 });
 
 describe("proporción de piromanos", () => {
-  it("en ninguna oleada pasan de 1 de cada 10, redondeando hacia arriba", () => {
+  // Antes, 1 de cada 10: su fuego causaba la mayoría de las bajas aliadas. Limbers pidió más magos para abrir el
+  // muro antes (2026-11-06); los aliados esperan detrás del muro, lejos del fuego. Tope: 1 de cada 4.
+  it("en ninguna oleada pasan de 1 de cada 4, redondeando hacia arriba", () => {
     for (const map of MAPS) {
       for (const wave of map.waves) {
         const total = wave.groups.reduce((sum, g) => sum + g.count, 0);
         const wizards = wave.groups.filter((g) => g.unit === "invader_wizard").reduce((sum, g) => sum + g.count, 0);
-        expect(wizards, `${map.id}, ${wave.name}`).toBeLessThanOrEqual(Math.ceil(total / 10));
+        expect(wizards, `${map.id}, ${wave.name}`).toBeLessThanOrEqual(Math.ceil(total / 4));
       }
     }
+  });
+});
+
+describe("validateMap: rutas", () => {
+  const base = MAPS[0];
+  const route = [{ x: 0, y: 64, z: 0 }];
+
+  it("las rutas de regreso y las de subida comparten el máximo", () => {
+    const four = [route, route, route, route];
+    expect(validateMap({ ...base, returnRoutes: four })).toEqual([]);
+    expect(validateMap({ ...base, returnRoutes: [route, route, route], approachRoutes: [route, route] }).join()).toContain("approachRoutes");
+  });
+
+  it("una ruta de subida necesita de 1 a 4 hitos", () => {
+    expect(validateMap({ ...base, approachRoutes: [[]] }).join()).toContain("approachRoutes[0]");
+    expect(validateMap({ ...base, approachRoutes: [[...route, ...route, ...route, ...route, ...route]] }).join()).toContain("approachRoutes[0]");
   });
 });

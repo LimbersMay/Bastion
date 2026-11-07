@@ -35,6 +35,9 @@ export const S = {
 
   started: "§aAsedio iniciado. Usa el reloj para abrir el menú.",
   resetDone: "§7Partida reiniciada.",
+  spectateOn: "§7Modo espectador: el asedio te deja en creativo para mirar (los enemigos no te atacan).",
+  spectateOff: "§7Modo espectador desactivado: el asedio se juega en supervivencia.",
+  sortieDone: "§7No queda ningún invasor: los aliados vuelven al castillo.",
   notIdle: "§cYa hay una partida en curso. Reinicia primero.",
   mapChanged: (name: string) => `§aMapa activo: §f${name}`,
   mapUnknown: (id: string) => `§cMapa desconocido: ${id}`,
@@ -44,7 +47,7 @@ export const S = {
   alliesRestored: (n: number) => `§aRefuerzos: ${n} ${n === 1 ? "aliado se une" : "aliados se unen"} a la defensa.`,
   wrongMap: (name: string) =>
     `§cEste mundo no parece ser «${name}»: no hay suelo donde va la puerta. §7Cambia de mapa en el menú (Cambiar mapa) o con /scriptevent bastion:map <id>.`,
-  scriptHelp: "§7Comandos: /scriptevent bastion:menu | start | reset | pos | map <id> | order <retreat|sortie> | reserve <mínimo> <reserva> <tanda>",
+  scriptHelp: "§7Comandos: /scriptevent bastion:menu | start | reset | pos | map <id> | order <retreat|sortie> | reserve <mínimo> <reserva> <tanda> | spectate <on|off>",
 
   retreatItemName: "§eOrden: retirada",
   retreatItemLore: "§7Úsala para que los aliados corran al castillo",

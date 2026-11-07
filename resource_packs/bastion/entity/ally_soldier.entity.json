@@ -3,9 +3,18 @@
   "minecraft:client_entity": {
     "description": {
       "identifier": "bastion:ally_soldier",
-      "materials": { "default": "entity_alphatest" },
-      "textures": { "default": "textures/entity/ally_soldier" },
-      "geometry": { "default": "geometry.bastion.humanoid" },
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "skin_0": "textures/entity/ally_soldier_0",
+        "skin_1": "textures/entity/ally_soldier_1",
+        "skin_2": "textures/entity/ally_soldier_2",
+        "skin_3": "textures/entity/ally_soldier_3"
+      },
+      "geometry": {
+        "default": "geometry.bastion.humanoid"
+      },
       "animations": {
         "look_at_target": "controller.animation.humanoid.look_at_target",
         "look_at_target_default": "animation.humanoid.look_at_target.default",
@@ -15,10 +24,21 @@
         "attack": "animation.bastion.humanoid.attack"
       },
       "scripts": {
-        "animate": ["look_at_target", "walk", { "attack": "variable.attack_time > 0.0" }]
+        "animate": [
+          "look_at_target",
+          "walk",
+          {
+            "attack": "variable.attack_time > 0.0"
+          }
+        ]
       },
-      "render_controllers": ["controller.render.bastion.default"],
-      "spawn_egg": { "base_color": "#2b4c9b", "overlay_color": "#c9ced6" }
+      "render_controllers": [
+        "controller.render.bastion.ally_soldier"
+      ],
+      "spawn_egg": {
+        "base_color": "#2b4c9b",
+        "overlay_color": "#c9ced6"
+      }
     }
   }
 }

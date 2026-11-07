@@ -109,12 +109,22 @@ if (cmd === "setup") {
 } else if (cmd === "serve") {
   // Deja el servidor encendido para entrar con el juego (Servidores > Añadir servidor > IP del PC, puerto 19132).
   // Para mandarle órdenes sin consola, escribe líneas en <BDS_DIR>/../cmd.txt (una orden por línea); `stop` lo apaga.
+  // Arranca con el modo espectador activado (`scriptevent bastion:spectate off` para jugar en supervivencia).
   const logPath = join(bds, "..", "serve.log");
   const cmdPath = join(bds, "..", "cmd.txt");
   writeFileSync(cmdPath, "");
   const log = createWriteStream(logPath);
   const child = spawn(join(bds, "bedrock_server.exe"), [], { cwd: bds });
-  const onData = (d) => { process.stdout.write(d); log.write(d); };
+  // En las pruebas el jugador mira en creativo (modo espectador de Bastion): se activa en cuanto arranca.
+  let started = false;
+  const onData = (d) => {
+    process.stdout.write(d);
+    log.write(d);
+    if (!started && String(d).includes("Server started.")) {
+      started = true;
+      setTimeout(() => child.stdin.write("scriptevent bastion:spectate on\n"), 3000);
+    }
+  };
   child.stdout.on("data", onData);
   child.stderr.on("data", onData);
   const timer = setInterval(() => {

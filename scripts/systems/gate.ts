@@ -56,8 +56,13 @@ export function removeObjectivesAndBolts(dimension: Dimension): void {
   }
 }
 
-/** Bloques decorativos que no cuentan como «sólido» (hierba, flores, nieve fina...). */
-export const PASSABLE_DECORATION = /grass|fern|flower|snow_layer|vine|bush|tulip|dandelion|poppy|orchid|allium|azure|cornflower|lily|carpet|torch|sapling|mushroom|leaf_litter|moss_carpet|:fire|soul_fire/;
+/**
+ * Bloques decorativos que no cuentan como «sólido» (hierba, flores, nieve fina...). Ojo con las palabras que
+ * también están en bloques macizos: `grass` a secas atrapaba `grass_block`, el césped, y las unidades aparecían
+ * con los pies hundidos en él; `mushroom` atraparía los bloques de seta gigante.
+ */
+export const PASSABLE_DECORATION =
+  /short_grass|tall_grass|tallgrass|dry_grass|seagrass|fern|flower(?!ing_azalea)|lilac|peony|pitcher|petals|snow_layer|vine|bush|tulip|dandelion|poppy|orchid|allium|azure|cornflower|lily|carpet|torch|sapling|mushroom(?!_block|_stem)|leaf_litter|reeds|sugar_cane|wheat|carrots|potatoes|beetroot|nether_sprouts|(crimson|warped|hanging)_roots|glow_lichen|sculk_vein|web|rail|button|lever|tripwire|pressure_plate|redstone_wire|:fire|soul_fire/;
 
 /**
  * Comprueba que el terreno coincide con lo que espera el mapa: el punto de referencia no es sólido

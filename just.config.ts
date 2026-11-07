@@ -14,7 +14,9 @@ import {
   getOrThrowFromProcess,
   watchTask,
 } from "@minecraft/core-build-tasks";
+import { mkdirSync, readFileSync, writeFileSync } from "fs";
 import path from "path";
+import { unitFiles } from "./tools/units/generate";
 
 // Variables de entorno (.env)
 setupEnvironment(path.resolve(__dirname, ".env"));
@@ -44,10 +46,29 @@ const mcaddonTaskOptions: ZipTaskParameters = {
   outputFile: `./dist/packages/${projectName}.mcaddon`,
 };
 
+// Unidades: genera sus archivos de los packs a partir de las fichas (scripts/units/catalog.ts)
+task("units", () => {
+  const files = unitFiles((p) => readFileSync(path.resolve(__dirname, p), "utf-8"));
+  let changed = 0;
+  for (const [file, text] of files) {
+    const full = path.resolve(__dirname, file);
+    let old = "";
+    try {
+      old = readFileSync(full, "utf-8");
+    } catch {}
+    if (old.replace(/\r\n/g, "\n") === text) continue;
+    mkdirSync(path.dirname(full), { recursive: true });
+    writeFileSync(full, text);
+    changed++;
+    console.log(`  ${file}`);
+  }
+  console.log(`Unidades: ${changed} archivo(s) actualizado(s) de ${files.size}.`);
+});
+
 // Build
 task("typescript", tscTask());
 task("bundle", bundleTask(bundleTaskOptions));
-task("build", series("typescript", "bundle"));
+task("build", series("units", "typescript", "bundle"));
 
 // Clean
 task("clean-local", cleanTask(DEFAULT_CLEAN_DIRECTORIES));

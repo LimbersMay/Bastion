@@ -13,7 +13,8 @@
     "local-deploy": "just-scripts local-deploy",
     "mcaddon": "just-scripts mcaddon",
     "mcaddon:production": "just-scripts mcaddon --production",
-    "art": "node tools/gen-placeholder-art.mjs"
+    "art": "node tools/gen-placeholder-art.mjs",
+    "units": "just-scripts units"
   },
   "devDependencies": {
     "@minecraft/core-build-tasks": "^5.5.0",

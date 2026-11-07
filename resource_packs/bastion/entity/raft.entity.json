@@ -1,0 +1,23 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "bastion:raft",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/blocks/planks_oak"
+      },
+      "geometry": {
+        "default": "geometry.bastion.raft"
+      },
+      "render_controllers": [
+        "controller.render.bastion.default"
+      ],
+      "scripts": {
+        "scale": "1.4"
+      }
+    }
+  }
+}

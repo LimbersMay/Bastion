@@ -1,12 +1,15 @@
 import type { BlockPermutation, Dimension, Entity } from "@minecraft/server";
-import { ENTITY_IDS, FAMILY } from "../constants";
+import { FAMILY } from "../constants";
 import type { GateDef, MapDef, Vec3 } from "../maps/types";
 import { Hunts } from "./hunt";
 import { digPlan, FIGHT_DISTANCE, GATE_WALL_HITS, hitsToBreak, inFightRange, isUnbreakable, nearBox } from "./digLogic";
+import { entityIdsWhere } from "../units/catalog";
 import { isReturning } from "./returnPath";
 import { isFreeSpace } from "./spawnPoint";
 import { inBox } from "./wallLogic";
 
+/** Quienes cazan y derriban paredes: los invasores cuerpo a cuerpo. */
+const SAPPER_TYPES = entityIdsWhere((u) => u.side === "invader" && u.role === "melee");
 /** Segundos sin avanzar para que un soldado decida que la pared le estorba. */
 const STALL_SECONDS = 3;
 /** Avanzar menos que esto cuenta como seguir en el mismo sitio (los empujones de la multitud no son avanzar). */
@@ -48,7 +51,7 @@ export class Sappers {
     const seen = new Map<string, { at: Vec3; still: number }>();
     let budget = MAX_BITES_PER_TICK;
     this.brokenNow = 0;
-    const soldiers = this.dimension.getEntities({ type: ENTITY_IDS.invaderSoldier });
+    const soldiers = SAPPER_TYPES.flatMap((type) => this.dimension.getEntities({ type }));
     const stalled: Entity[] = [];
 
     for (const unit of soldiers) {

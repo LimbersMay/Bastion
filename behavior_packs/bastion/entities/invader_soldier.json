@@ -9,6 +9,13 @@
     },
     "component_groups": {
       "bastion:march": {
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true,
+          "can_pass_doors": true,
+          "can_open_doors": true,
+          "avoid_water": true
+        },
+        "minecraft:movement.basic": {},
         "minecraft:behavior.nearest_attackable_target": {
           "priority": 2,
           "must_see": false,
@@ -255,6 +262,18 @@
         }
       },
       "bastion:returning": {
+        "minecraft:navigation.generic": {
+          "can_swim": true,
+          "can_walk": true,
+          "can_breach": true,
+          "can_pass_doors": true,
+          "can_open_doors": true,
+          "avoid_water": false
+        },
+        "minecraft:movement.amphibious": {},
+        "minecraft:underwater_movement": {
+          "value": 0.1
+        },
         "minecraft:behavior.nearest_prioritized_attackable_target": {
           "priority": 2,
           "must_see": false,
@@ -285,12 +304,17 @@
                   {
                     "test": "has_tag",
                     "subject": "self",
+                    "value": "bastion_route_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
                     "value": "bastion_stage_0"
                   },
                   {
                     "test": "has_tag",
                     "subject": "other",
-                    "value": "bastion_wp_0"
+                    "value": "bastion_wp_0_0"
                   }
                 ]
               },
@@ -300,6 +324,11 @@
             {
               "filters": {
                 "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_0"
+                  },
                   {
                     "test": "has_tag",
                     "subject": "self",
@@ -308,7 +337,7 @@
                   {
                     "test": "has_tag",
                     "subject": "other",
-                    "value": "bastion_wp_1"
+                    "value": "bastion_wp_0_1"
                   }
                 ]
               },
@@ -318,6 +347,11 @@
             {
               "filters": {
                 "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_0"
+                  },
                   {
                     "test": "has_tag",
                     "subject": "self",
@@ -326,7 +360,7 @@
                   {
                     "test": "has_tag",
                     "subject": "other",
-                    "value": "bastion_wp_2"
+                    "value": "bastion_wp_0_2"
                   }
                 ]
               },
@@ -339,12 +373,293 @@
                   {
                     "test": "has_tag",
                     "subject": "self",
+                    "value": "bastion_route_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
                     "value": "bastion_stage_3"
                   },
                   {
                     "test": "has_tag",
                     "subject": "other",
-                    "value": "bastion_wp_3"
+                    "value": "bastion_wp_0_3"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_1_0"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_1_1"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_1_2"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_1_3"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_2_0"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_2_1"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_2_2"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_2_3"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_0"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_3_0"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_1"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_3_1"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_2"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_3_2"
+                  }
+                ]
+              },
+              "max_dist": 200,
+              "priority": 1
+            },
+            {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_route_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "self",
+                    "value": "bastion_stage_3"
+                  },
+                  {
+                    "test": "has_tag",
+                    "subject": "other",
+                    "value": "bastion_wp_3_3"
                   }
                 ]
               },
@@ -353,6 +668,31 @@
             }
           ],
           "scan_interval": 40
+        }
+      },
+      "bastion:skin_0": {
+        "minecraft:variant": {
+          "value": 0
+        }
+      },
+      "bastion:skin_1": {
+        "minecraft:variant": {
+          "value": 1
+        }
+      },
+      "bastion:skin_2": {
+        "minecraft:variant": {
+          "value": 2
+        }
+      },
+      "bastion:skin_3": {
+        "minecraft:variant": {
+          "value": 3
+        }
+      },
+      "bastion:skin_4": {
+        "minecraft:variant": {
+          "value": 4
         }
       }
     },
@@ -374,14 +714,7 @@
       "minecraft:movement": {
         "value": 0.28
       },
-      "minecraft:navigation.walk": {
-        "can_path_over_water": true,
-        "can_pass_doors": true,
-        "can_open_doors": true,
-        "avoid_water": true
-      },
       "minecraft:annotation.open_door": {},
-      "minecraft:movement.basic": {},
       "minecraft:jump.static": {},
       "minecraft:can_climb": {},
       "minecraft:follow_range": {
@@ -390,6 +723,15 @@
       },
       "minecraft:attack": {
         "damage": 4
+      },
+      "minecraft:equipment": {
+        "table": "loot_tables/entities/invader_soldier_gear.json",
+        "slot_drop_chance": [
+          {
+            "slot": "slot.weapon.mainhand",
+            "drop_chance": 0
+          }
+        ]
       },
       "minecraft:persistent": {},
       "minecraft:physics": {},
@@ -458,6 +800,66 @@
     },
     "events": {
       "minecraft:entity_spawned": {
+        "sequence": [
+          {
+            "add": {
+              "component_groups": [
+                "bastion:march"
+              ]
+            }
+          },
+          {
+            "randomize": [
+              {
+                "weight": 1,
+                "add": {
+                  "component_groups": [
+                    "bastion:skin_0"
+                  ]
+                }
+              },
+              {
+                "weight": 1,
+                "add": {
+                  "component_groups": [
+                    "bastion:skin_1"
+                  ]
+                }
+              },
+              {
+                "weight": 1,
+                "add": {
+                  "component_groups": [
+                    "bastion:skin_2"
+                  ]
+                }
+              },
+              {
+                "weight": 1,
+                "add": {
+                  "component_groups": [
+                    "bastion:skin_3"
+                  ]
+                }
+              },
+              {
+                "weight": 1,
+                "add": {
+                  "component_groups": [
+                    "bastion:skin_4"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "bastion:march": {
+        "remove": {
+          "component_groups": [
+            "bastion:returning"
+          ]
+        },
         "add": {
           "component_groups": [
             "bastion:march"
@@ -473,18 +875,6 @@
         "add": {
           "component_groups": [
             "bastion:returning"
-          ]
-        }
-      },
-      "bastion:march": {
-        "remove": {
-          "component_groups": [
-            "bastion:returning"
-          ]
-        },
-        "add": {
-          "component_groups": [
-            "bastion:march"
           ]
         }
       }

@@ -1,6 +1,7 @@
 import type { Block, Dimension } from "@minecraft/server";
 import type { Vec3 } from "../maps/types";
 import { PASSABLE_DECORATION } from "./gate";
+import { bodySamples, isThin } from "./stuckLogic";
 
 /** Un bloque por el que una unidad puede estar de pie dentro: aire, agua o decoración fina. */
 export function isFreeSpace(block: Block | undefined): boolean {
@@ -47,6 +48,7 @@ export function findStandingY(dimension: Dimension, x: number, y: number, z: num
 /**
  * Posición libre cerca de `position`: prueba varios desplazamientos aleatorios de hasta `jitter` bloques
  * y, si todos caen en roca o en el vacío, el centro exacto. Evita que las unidades aparezcan dentro de bloques.
+ * Siempre en el centro de la casilla: en un borde, el cuerpo (0,6 de ancho) rozaría el bloque de al lado.
  */
 export function findSafeSpawn(dimension: Dimension, position: Vec3, jitter: number, tries = 10): Vec3 | undefined {
   for (let i = 0; i < tries; i++) {
@@ -54,21 +56,24 @@ export function findSafeSpawn(dimension: Dimension, position: Vec3, jitter: numb
     const x = position.x + (Math.random() * 2 - 1) * radius;
     const z = position.z + (Math.random() * 2 - 1) * radius;
     const y = findStandingY(dimension, x, position.y, z);
-    if (y !== undefined) return { x, y, z };
+    if (y !== undefined) return { x: Math.floor(x) + 0.5, y, z: Math.floor(z) + 0.5 };
   }
   return undefined;
 }
 
 /**
- * ¿Está la entidad con los pies Y la cabeza dentro de bloques sólidos? Basta con uno para dar falsos
- * positivos: quien sube una escalera o cruza una puerta tiene ese bloque a la altura de los pies.
+ * ¿Tiene parte del cuerpo dentro de un bloque macizo? Se mira el centro y cuatro esquinas, a la altura de los
+ * pies y de la cabeza. Los bloques que no llenan su casilla (vallas, losas, escaleras, puertas...) no cuentan:
+ * quien sube una escalera o cruza una puerta abierta está dentro de esa casilla sin estar atascado.
  */
 export function isEmbedded(dimension: Dimension, at: Vec3): boolean {
   try {
-    const feet = dimension.getBlock({ x: at.x, y: at.y + 0.6, z: at.z });
-    const head = dimension.getBlock({ x: at.x, y: at.y + 1.5, z: at.z });
-    if (!feet || !head) return false; // sin cargar: no se puede saber
-    return !isFreeSpace(feet) && !isFreeSpace(head);
+    for (const point of bodySamples(at)) {
+      const block = dimension.getBlock(point);
+      if (!block) return false; // sin cargar: no se puede saber
+      if (!isFreeSpace(block) && !isThin(block.typeId)) return true;
+    }
+    return false;
   } catch {
     return false;
   }

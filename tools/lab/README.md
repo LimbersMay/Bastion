@@ -26,7 +26,8 @@ No necesita el laboratorio activado: usa las unidades reales del pack.
 1. Descomprime `assets/worlds/Old Fallen Castle - v1.3.mcworld` en una carpeta (un `.mcworld` es un zip).
 2. `npm run mcaddon && node tools/bds.mjs setup <esa-carpeta>`
 3. `node tools/bds.mjs serve` en una terminal.
-4. `node tools/lab/siege.mjs <etiqueta> 9` en otra.
+4. Escribe `scriptevent bastion:map old-fallen-castle` en `<BDS_DIR>/../cmd.txt`: un mundo recién preparado empieza con el primer mapa (The Combat Castle) y, si no, el asedio no arranca.
+5. `node tools/lab/siege.mjs <etiqueta> 9` en otra terminal, **sin nadie conectado**: un jugador en supervivencia también es presa y cambia el resultado.
 
 Enfrenta a 30 aliados y 60 soldados invasores, sin piromanos, durante 9 minutos. Cada 30 s anota vivos, bloques derribados y ticks/s; al final, dónde quedó cada unidad. El resultado queda en `tools/lab/siege-<etiqueta>.log`. Vuelve a `setup` antes de repetirla para restaurar el mundo.
 
