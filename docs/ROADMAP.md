@@ -7,9 +7,9 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 
 ## Dónde nos quedamos
 
-*Última actualización: 2026-11-06. Versión de los packs: 0.1.43. Rama: `feature/old-fallen-castle`, sin subir. Cambios de la Fase 2 sin commitear.*
+*Última actualización: 2026-11-06. Versión de los packs: 0.1.43. Rama: `feature/old-fallen-castle`, sin subir. La Fase 2 está commiteada (8a6bb88).*
 
-- **Fase actual:** Fase 2, unidades estándar. Hechas la ficha, el generador, la migración y las armas en la mano.
+- **Fase actual:** termina la Fase 2 (unidades estándar); la siguiente sesión empieza la Fase 3, combate orgánico. Lo que sigue es el historial de la Fase 2.
 - **Fichas (v0.1.25):** cada unidad es una ficha en `scripts/units/catalog.ts` y `npm run units` genera sus archivos. Las 4 unidades salen iguales que antes, comprobado campo por campo. La única diferencia es que el evento de asedio del mago ahora también le quita el modo de asalto. Batalla de referencia sin jugador: 34 aliados y 45 invasores caídos, 146 bloques; antes, 34 y 50, 121 bloques. Mismo resultado.
 - **Armas (v0.1.26), sin ver en juego:** espada de hierro (soldado aliado), hacha de hierro (invasor), vara de blaze (pirómano) y vara de breeze (mago). No se sueltan al morir. El arma suma su daño al golpe (medido en el servidor). El generador hace que el golpe sea siempre el de la ficha.
 - **Daño completo de las armas (v0.1.27), elegido por Limbers, sin probar en juego:** golpe de 10 el soldado aliado y 9 el invasor, antes 4. Duelos de 6 a 10,5 s, antes 15 a 22,5. Al jugador le pegan 9.
@@ -43,7 +43,8 @@ Cómo funciona el juego y cómo probarlo: [README](../README.md).
 - **Monstruos del juego como enemigos (v0.1.43), pedido por Limbers:** los aliados reconocen como enemigos a todos los monstruos, también creepers, endermen y brujas, pero siempre van antes a por los invasores (`nearest_prioritized_attackable_target`: invasores en rango 0, monstruos en rango 1). A un monstruo solo lo buscan si está dentro del castillo o ha atacado a un jugador en los últimos 30 s (etiqueta `bastion_intruder`, que pone `scripts/systems/intruders.ts` cada segundo), o si lo tienen a menos de 6 bloques. La zona del castillo es un cilindro alrededor de los puntos del mapa (aliados, puestos, patio, metas); en Stonehill, 30 bloques de radio. En el servidor: un zombi, un creeper, una bruja y un enderman soltados en el patio murieron en menos de 20 s; un zombi y un esqueleto fuera, en el valle, siguieron vivos. Ojo: el creeper explota y daña a los aliados y al castillo.
 - **Fin de la salida (v0.1.43):** con la orden de ataque salen solo a por los invasores; cuando muere el último y no queda ninguno por salir, vuelven solos a los puestos de defensa (o a los suyos, sin puestos) con un aviso en el chat.
 - **Modo espectador para las pruebas (v0.1.43):** `/scriptevent bastion:spectate on|off`. Con él, el asedio deja a los jugadores en creativo en vez de en supervivencia. `tools/bds.mjs serve` lo activa al arrancar.
-- **Siguiente paso:** Limbers mira en la tablet a los aliados contra los monstruos y la vuelta tras la salida. Pendiente: más skins de arquero invasor.
+- **Limbers probó la v0.1.43:** todo bien. Fase 2 cerrada.
+- **Siguiente paso:** empezar la Fase 3, combate orgánico (ver «Fases»). Pendiente de la Fase 2: más skins de arquero invasor.
 - **Vigilar:** el 73 % de las búsquedas de ruta agotan su límite. Falta medirlas con la partida corriendo dentro de la tablet.
 - **Pendiente de decidir:** ver «Decisiones abiertas».
 
@@ -137,7 +138,7 @@ La caza:
 - [x] Limbers la prueba en juego y le convence.
 - [ ] Medir el coste de las búsquedas con la partida corriendo dentro de la tablet (POCO Pad, Snapdragon 7s Gen 2, 8 GB).
 
-### En curso: Fase 2, unidades estándar
+### Hecho: Fase 2, unidades estándar
 
 Una unidad se define con una ficha de datos, y un generador crea sus archivos del juego. Sin esto, cada unidad nueva son cientos de líneas repetidas. Cómo añadir una: [README](../README.md), «Añadir una unidad».
 
@@ -152,14 +153,15 @@ Una unidad se define con una ficha de datos, y un generador crea sus archivos de
 - [x] Retirada a puestos de defensa (frente, lados y en alto) y orden de ataque sin límite de distancia.
 - [x] Balsas para salir del agua, con el nado y el empujón de respaldo.
 - [x] Ver en juego las balsas (Limbers): sacan rápido del agua.
-- [ ] Ver en juego los puestos de la retirada (Limbers).
+- [x] Ver en juego los puestos de la retirada (Limbers).
 - [x] Rescate de los varados en repisas junto al agua.
-- [x] Los aliados atacan también a los monstruos del juego.
-- [ ] Rol de arquero: arco en la mano, postura de apuntar y flecha propia que desaparece al chocar.
-- [ ] Primeras unidades nuevas: guerrero y arquero aliados, arquero invasor.
-- [ ] Algo de variación en vida o daño por unidad, para que los duelos no estén decididos de antemano (propuesto en [IA.md](IA.md)).
+- [x] Los aliados atacan también a los monstruos del juego, todos (creepers, endermen y brujas incluidos), siempre después de los invasores.
+- [x] La orden de ataque termina sola cuando no quedan invasores.
+- [x] Rol de arquero: arco en la mano, postura de apuntar y flecha propia que desaparece al chocar.
+- [x] Primeras unidades nuevas: guerrero y arquero aliados, arquero invasor (de momento solo en Stonehill).
+- [ ] Algo de variación en vida o daño por unidad, para que los duelos no estén decididos de antemano (propuesto en [IA.md](IA.md)). Pasa a la Fase 3.
 
-### Fase 3, combate orgánico
+### Siguiente: Fase 3, combate orgánico
 
 Para que no se pelee en bolita ni a toda velocidad.
 
